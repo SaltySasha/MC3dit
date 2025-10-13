@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QProcess>
+#include <QTimer>
+#include <QPushButton>
 
 
 QT_BEGIN_NAMESPACE
@@ -25,6 +27,8 @@ public:
     void dragMoveEvent(QDragMoveEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 
+    void SetButtonLock(bool AreButtonsLocked);
+
     QString AssetPath;
 
 private:
@@ -33,6 +37,11 @@ private:
 
     void OnUnpackButtonClicked();
     void OnPackButtonClicked();
+
+    QTimer* ButtonAnimationTimer = new QTimer(this);
+
+    void PlayButtonAnimation(QPushButton* InButton, const QString& InButtonText);
+    void ResetButton(QPushButton* InButton, const QString& InButtonText);
 };
 
 

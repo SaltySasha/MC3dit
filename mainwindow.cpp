@@ -1,10 +1,9 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "utils.h"
 
 #include <QDir>
-#include <QDragEnterEvent>
 #include <QDragLeaveEvent>
-#include <QDropEvent>
 #include <QFileInfo>
 #include <QMimeData>
 #include <QProcess>
@@ -13,6 +12,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->setupUi(this);
 
     setFixedSize(width(), height());
+    // ui->statusbar->setStyleSheet("color: blue");
+    // ui->statusbar->showMessage("Test!!");
+
     connect(ui->UnpackButton, &QPushButton::clicked, this, &MainWindow::OnUnpackButtonClicked);
     connect(ui->PackButton, &QPushButton::clicked, this, &MainWindow::OnPackButtonClicked);
 }
@@ -63,71 +65,49 @@ void MainWindow::dropEvent(QDropEvent *event) {
         event->ignore();
 }
 
+void MainWindow::SetButtonLock(bool AreButtonsLocked) {
+    ui->PackButton->setEnabled(AreButtonsLocked);
+    ui->UnpackButton->setEnabled(AreButtonsLocked);
+}
+
 void MainWindow::OnUnpackButtonClicked() {
     if (QFileInfo(AssetPath).isFile()) {
-        ui->UnpackButton->setText("Unpacking...");
-        QApplication::processEvents();
-        QString Program = "python";
-        QString DaveScript = QDir::currentPath() + "/scripts/dave.py";
-        QStringList Arguments = {DaveScript, "X", AssetPath};
-        QProcess* Process = new QProcess(this);
-        Process->setProcessChannelMode(QProcess::MergedChannels);
-        connect(Process, &QProcess::readyReadStandardOutput, [Process]() {
-            QString Output = Process->readAllStandardOutput();
-            qDebug() << Output;
-            if (Output.contains("Overwrite")) {
-                Process->write(QString("Y").toLatin1());
-                Process->waitForBytesWritten();
-                Process->closeWriteChannel();
-            }
-            else {
-                Process->terminate();
-            }
+        PlayButtonAnimation(ui->UnpackButton, "Unpacking");
+        QStringList Arguments = {"X", AssetPath};
+        bool ShouldPlaySound = ui->SoundCheckBox->isChecked();
+        RunDaveScript(Arguments, ShouldPlaySound, [&](int, QProcess::ExitStatus) {
+            ResetButton(ui->UnpackButton, "Unpack");
         });
-        connect(Process, &QProcess::finished, [&](int exitCode, QProcess::ExitStatus status) {
-            if (status == QProcess::NormalExit)
-                qDebug() << "Process finished normally with code" << exitCode;
-            else
-                qDebug() << "Process was killed or crashed" << exitCode << status;
-
-            ui->UnpackButton->setText("Unpack");
-        });
-        Process->start(Program, Arguments);
-        Process->waitForFinished(-1);
+        qDebug() << ui->SoundCheckBox->isChecked();
     }
 }
 
 void MainWindow::OnPackButtonClicked() {
     if (QFileInfo(AssetPath).isFile()) {
-        ui->PackButton->setText("Packing...");
-        QApplication::processEvents();
-        QString Program = "python";
-        QString DaveScript = QDir::currentPath() + "/scripts/dave.py";
-        QStringList Arguments = {DaveScript, "B", "-ca", "-cn", "-cf", "-fc", "1", AssetPath.left(AssetPath.length()-4), AssetPath};
-        qDebug() << Arguments;
-        QProcess* Process = new QProcess(this);
-        Process->setProcessChannelMode(QProcess::MergedChannels);
-        connect(Process, &QProcess::readyReadStandardOutput, [Process]() {
-            QString Output = Process->readAllStandardOutput();
-            qDebug() << Output;
-            if (Output.contains("Overwrite")) {
-                Process->write(QString("Y").toLatin1());
-                Process->waitForBytesWritten();
-                Process->closeWriteChannel();
-            }
-            else {
-                Process->terminate();
-            }
+        PlayButtonAnimation(ui->PackButton, "Packing");
+        QStringList Arguments = {"B", "-ca", "-cn", "-cf", "-fc", "1", AssetPath.left(AssetPath.length()-4), AssetPath};
+        bool ShouldPlaySound = ui->SoundCheckBox->isChecked();
+        RunDaveScript(Arguments, ShouldPlaySound, [&](int, QProcess::ExitStatus) {
+            ResetButton(ui->PackButton, "Pack");
         });
-        connect(Process, &QProcess::finished, [&](int exitCode, QProcess::ExitStatus status) {
-            if (status == QProcess::NormalExit)
-                qDebug() << "Process finished normally with code" << exitCode;
-            else
-                qDebug() << "Process was killed or crashed" << exitCode << status;
-
-            ui->PackButton->setText("Pack");
-        });
-        Process->start(Program, Arguments);
-        Process->waitForFinished(-1);
     }
+}
+
+void MainWindow::PlayButtonAnimation(QPushButton* InButton, const QString& InButtonText) {
+    SetButtonLock(false);
+    QStringList AnimationText = {"", ".", "..", "..."};
+    int Index = 0;
+    connect(ButtonAnimationTimer, &QTimer::timeout, this, [=]() mutable {
+                InButton->setText(InButtonText + AnimationText[Index]);
+                Index = (Index + 1) % AnimationText.size();
+            });
+    ButtonAnimationTimer->setInterval(0);
+    ButtonAnimationTimer->start(300);
+}
+
+void MainWindow::ResetButton(QPushButton* InButton, const QString &InButtonText) {
+    SetButtonLock(true);
+    InButton->setText(InButtonText);
+    ButtonAnimationTimer->stop();
+    ButtonAnimationTimer->disconnect();
 }

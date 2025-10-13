@@ -8,21 +8,30 @@ set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "C:/Qt/6.9.3/mingw_64/lib/cmake/Qt6")
 
-find_package(Qt6 COMPONENTS
+find_package(Qt6 REQUIRED COMPONENTS
         Core
         Gui
         Widgets
-        REQUIRED)
+)
+
+if (WIN32)
+    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/mc3dit.rc")
+endif()
 
 add_executable(MC3dit WIN32 main.cpp
         utils.cpp
         mainwindow.cpp
         mainwindow.h
-        mainwindow.ui)
+        mainwindow.ui
+        utils.h
+        ${APP_ICON_RESOURCE_WINDOWS}
+)
+
 target_link_libraries(MC3dit
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        winmm
 )
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
