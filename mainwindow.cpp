@@ -56,6 +56,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
                 AssetPath = event->mimeData()->urls()[0].toLocalFile();
                 QFileInfo FileInfo(AssetPath);
                 ui->DropLabel->setText(FileInfo.fileName());
+                ReadDaveFile(this, AssetPath);
             }
             else
                 ui->DropLabel->setText("Not a .DAT file!");

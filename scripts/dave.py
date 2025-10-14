@@ -282,6 +282,7 @@ def read_dave(path, output=str()):
         assert dave in DAVES, ERR_DAVE
 
         entries = read_int(0x4)
+        print("Entries", entries)
         info_size = read_int(0x4)
         name_size = read_int(0x4)
 
@@ -292,10 +293,12 @@ def read_dave(path, output=str()):
             file_offs = read_int(0x4)
             file_size_full = read_int(0x4)
             file_size_comp = read_int(0x4)
+            #print(name_offs, file_offs, file_size_full, file_size_comp)
 
             file.seek(name_offs)
             if dave == DAVE:
                 file_name = read_str()
+
             else:  # = Dave:
                 name_bits = read_bits()
                 prev_name = file_name
@@ -308,6 +311,7 @@ def read_dave(path, output=str()):
                     if not name_bits:
                         name_bits = read_bits()
 
+            print(i,file_name, name_offs, file_offs, file_size_full, file_size_comp)
             outpath = os.path.join(output, file_name)
             if not POSIX_SEP:
                 outpath = outpath.replace("/", "\\")
