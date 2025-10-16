@@ -18,12 +18,16 @@ if (WIN32)
     set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/mc3dit.rc")
 endif()
 
-add_executable(MC3dit WIN32 main.cpp
-        utils.cpp
-        mainwindow.cpp
-        mainwindow.h
+add_executable(MC3dit WIN32
+        main.cpp
         mainwindow.ui
+        mainwindow.h
+        mainwindow.cpp
         utils.h
+        utils.cpp
+        DATFile.h
+        DATFile.cpp
+
         ${APP_ICON_RESOURCE_WINDOWS}
 )
 

@@ -305,14 +305,16 @@ def read_dave(path, output=str()):
                 file_name = str()
                 if name_bits[0] >= 0x38:  # deduplicate
                     dedup_size = (name_bits.pop(1) - 0x20) * 8 + name_bits.pop(0) - 0x38
+                    print(i, dedup_size)
                     file_name = prev_name[:dedup_size]
                 while name_bits[0]:  # decompress
                     file_name += CHARS[name_bits.pop(0)]
                     if not name_bits:
                         name_bits = read_bits()
 
-            print(i,file_name, name_offs, file_offs, file_size_full, file_size_comp)
+            #print(i,file_name, name_offs, file_offs, file_size_full, file_size_comp)
             outpath = os.path.join(output, file_name)
+            #print(outpath)
             if not POSIX_SEP:
                 outpath = outpath.replace("/", "\\")
 
