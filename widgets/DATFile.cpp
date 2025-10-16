@@ -1,6 +1,7 @@
-﻿#include "DATFile.h"
-
+﻿#include "datfile.h"
+#include "../misc/utils.h"
 #include <QAbstractFileIconProvider>
+#include <QDir>
 #include <QMessageBox>
 
 DATFile::DATFile(const QString &InFilePath) {
@@ -25,10 +26,12 @@ void DATFile::ReadDaveFile() {
         FileType = FileData;
         if (DATHeaderList.contains(FileType)) {
             Stream >> Entries;
+            Files.reserve(Entries);
             Stream >> FileSize;
             Stream >> FileNameSize;
 
             emit SetProgressBarMax(Entries);
+
 
             QString FileName;
             quint32 NameOffset;
@@ -37,12 +40,9 @@ void DATFile::ReadDaveFile() {
             quint32 FileSizeCompressed;
             for (quint32 i = 0; i < Entries; i++) {
                 Stream.device()->seek(0x800 + i * 0x10);
-                //qDebug() << i << Stream.device()->pos();
 
-                Stream >> NameOffset;
-                //qDebug() << i << NameOffset;
+                Stream  >> NameOffset;
                 NameOffset += FileSize + 0x800;
-
                 Stream >> FileOffset;
                 Stream >> FileSizeFull;
                 Stream >> FileSizeCompressed;
@@ -52,13 +52,12 @@ void DATFile::ReadDaveFile() {
                     FileName = ReadString(Stream);
                 else if (FileType == "Dave"){
                     // Convert to its own function.
-                    QList<qint32> NameBits;
+                    QList<quint32> NameBits;
                     NameBits = ReadBits(Stream);
                     QString PreviousFileName = FileName;
                     FileName.clear();
                     if (NameBits[0] >= 0x38) {
                         qint32 DeduplicatedSize = (NameBits.takeAt(1) - 0x20) * 8 + NameBits.takeAt(0) - 0x38;
-                        //qDebug() << i << DeduplicatedSize << NameBits;
                         FileName = PreviousFileName.left(DeduplicatedSize);
                     }
                     while (!NameBits.isEmpty() && NameBits.first() != 0) {
@@ -69,7 +68,7 @@ void DATFile::ReadDaveFile() {
                 }
 
                 //qDebug() << i << FileName << NameOffset << FileOffset << FileSizeFull << FileSizeCompressed;
-                AddVirtualPath(FileName);
+                AddVirtualPath(FileName, NameOffset, FileOffset, FileSizeFull, FileSizeCompressed);
                 emit UpdateProgressBar(i + 1);
             }
 
@@ -80,7 +79,6 @@ void DATFile::ReadDaveFile() {
 
         File.close();
         ItemModel->sort(0, Qt::AscendingOrder);
-        disconnect();
     }
 }
 
@@ -99,14 +97,15 @@ QString DATFile::ReadString(QDataStream &InStream) {
     return Result;
 }
 
-QList<qint32> DATFile::ReadBits(QDataStream &InStream) {
-    QList<qint32> Result;
-    char Buffer[3];
+QList<quint32> DATFile::ReadBits(QDataStream &InStream) {
+    QList<quint32> Result;
+    Result.reserve(4);
 
-    InStream.readRawData(Buffer, 3);
-    quint32 CompressedData = static_cast<quint8>(Buffer[0])
-                            | (static_cast<quint8>(Buffer[1]) << 8)
-                            | (static_cast<quint8>(Buffer[2]) << 16);
+    quint8 Buffer[3];
+    InStream.readRawData(reinterpret_cast<char*>(Buffer), 3);
+    quint32 CompressedData = Buffer[0]
+                            | Buffer[1] << 8
+                            | Buffer[2] << 16;
     for (quint32 i = 0; i < 4; i++)
         Result.append(CompressedData >> (i * 6) & 0x3f);
 
@@ -114,8 +113,8 @@ QList<qint32> DATFile::ReadBits(QDataStream &InStream) {
 }
 
 // TODO: Potentially rework to speed up opening of file
-void DATFile::AddVirtualPath(const QString &VirtualPath) const {
-    QStringList Parts = VirtualPath.split("/", Qt::SkipEmptyParts);
+void DATFile::AddVirtualPath(const QString &InVirtualPath, quint32 InNameOffset, quint32 InFileOffset, quint32 InFileSizeFull, quint32 InFileSizeCompressed) {
+    QStringList Parts = InVirtualPath.split("/", Qt::SkipEmptyParts);
     QStandardItem* Parent = ItemModel->invisibleRootItem();
     QString Part;
     QStandardItem* Item;
@@ -134,17 +133,59 @@ void DATFile::AddVirtualPath(const QString &VirtualPath) const {
         }
 
         if (!Item) {
-            Item = new QStandardItem(Part);
+            if (IsFile) {
+                DCFile *NewFile = new DCFile(InVirtualPath);
+                NewFile->SetNameOffset(InNameOffset);
+                NewFile->SetFileOffset(InFileOffset);
+                NewFile->SetFileSizeFull(InFileSizeFull);
+                NewFile->SetFileSizeCompressed(InFileSizeCompressed);
+                Files.append(NewFile);
+                Item = NewFile;
+            }
+            else {
+                Item = new QStandardItem(Part);
+                Item->setIcon(QAbstractFileIconProvider().icon(QAbstractFileIconProvider::Folder));
+            }
+
             Item->setData(IsFile ? 1 : 0);
             Item->setEditable(false);
-            if (IsFile)
-                Item->setIcon(QAbstractFileIconProvider().icon(QAbstractFileIconProvider::File));
-            else
-                Item->setIcon(QAbstractFileIconProvider().icon(QAbstractFileIconProvider::Folder));
-
             Parent->appendRow(Item);
         }
 
         Parent = Item;
+    }
+}
+
+// TODO: Export on separate thread, maybe even more than one (I am speed)
+void DATFile::ExportFiles() {
+    if (QFile DATFile(FileInfo.filePath()); DATFile.exists()) {
+        if (!DATFile.open(QIODeviceBase::ReadOnly)) {
+            QMessageBox::warning(this, "No File", QString("Could not find %1 with reason: %2").arg(FileInfo.fileName(), DATFile.errorString()));
+        }
+
+        emit SetProgressBarMax(Entries);
+
+        quint32 FileNumber = 1;
+        for (auto File : Files) {
+            DATFile.seek(File->GetFileOffset());
+            QByteArray Data = DATFile.read(File->GetFileSizeCompressed());
+            if (File->GetFileSizeFull() != File->GetFileSizeCompressed()) {
+                Data = Decompress(Data, File->GetFileSizeFull());
+            }
+            QString FilePath = MakeFileDirectory() + "/" + File->GetFilePath();
+            QFile NewFile(FilePath);
+
+            QDir Directory;
+            if (Directory.mkpath(MakeFileDirectory() + "/" + File->GetPath()) && NewFile.open(QIODevice::ReadWrite)) {
+                NewFile.write(Data);
+                NewFile.close();
+            }
+
+            emit UpdateProgressBar(FileNumber);
+            FileNumber++;
+        }
+
+        DATFile.close();
+        emit ExportFinished();
     }
 }

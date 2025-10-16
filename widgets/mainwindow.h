@@ -1,5 +1,4 @@
-﻿#ifndef MC3DIT_MAINWINDOW_H
-#define MC3DIT_MAINWINDOW_H
+﻿#pragma once
 
 #include <QMainWindow>
 #include <QProcess>
@@ -48,6 +47,3 @@ private:
     QMap<QWidget*, QTreeView*> TabToTreeViewMap;
     QMap<QWidget*, QStandardItemModel*> TabToModelMap;
 };
-
-
-#endif //MC3DIT_MAINWINDOW_H

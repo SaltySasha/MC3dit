@@ -1,6 +1,6 @@
-﻿#ifndef MC3DIT_DATFile_H
-#define MC3DIT_DATFile_H
+﻿#pragma once
 
+#include "dcfile.h"
 #include <QFileInfo>
 #include <QStandardItemModel>
 #include <QTreeView>
@@ -12,6 +12,7 @@ public:
     explicit DATFile(const QString &InFilePath);
 
     void ReadDaveFile();
+    void ExportFiles();
     QString GetFileName() const {return FileInfo.fileName();}
     QString GetFileType() const {return FileType;}
     QString GetFilePath() const {return FileInfo.absoluteFilePath();}
@@ -21,6 +22,7 @@ public:
 signals:
     void SetProgressBarMax(quint32 NewMax);
     void UpdateProgressBar(quint32 NewValue);
+    void ExportFinished();
 
 private:
     const QStringList DATHeaderList = {"Dave", "DAVE"}; // TODO, "Hash"}; - Add Hash file type support
@@ -28,6 +30,7 @@ private:
 
     QFileInfo FileInfo;
     QStandardItemModel *ItemModel;
+    QList<DCFile*> Files;
 
     QString FileType;
     quint32 Entries;
@@ -35,10 +38,7 @@ private:
     quint32 FileNameSize;
 
     QString ReadString(QDataStream &InStream);
-    QList<qint32> ReadBits(QDataStream &InStream);
-    void AddVirtualPath(const QString& VirtualPath) const;
+    QList<quint32> ReadBits(QDataStream &InStream);
+    void AddVirtualPath(const QString& InVirtualPath, quint32 InNameOffset, quint32 InFileOffset, quint32 InFileSizeFull, quint32 InFileSizeCompressed);
 
 };
-
-
-#endif //MC3DIT_DATFile_H

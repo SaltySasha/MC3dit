@@ -305,7 +305,7 @@ def read_dave(path, output=str()):
                 file_name = str()
                 if name_bits[0] >= 0x38:  # deduplicate
                     dedup_size = (name_bits.pop(1) - 0x20) * 8 + name_bits.pop(0) - 0x38
-                    print(i, dedup_size)
+                    #print(i, dedup_size)
                     file_name = prev_name[:dedup_size]
                 while name_bits[0]:  # decompress
                     file_name += CHARS[name_bits.pop(0)]
@@ -332,6 +332,7 @@ def read_dave(path, output=str()):
             else:  # looks very jarring if the length isn't the same, so it isn't "Creating" or "Making"
                 # print("Opening", outpath)
                 os.makedirs(outpath, exist_ok=True)
+                print("I'm doing this!")
 
     print("\nSuccess! Done extracting.")
 

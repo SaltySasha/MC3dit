@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR}/ui)
 
 set(CMAKE_PREFIX_PATH "C:/Qt/6.9.3/mingw_64/lib/cmake/Qt6")
 
@@ -15,18 +16,20 @@ find_package(Qt6 REQUIRED COMPONENTS
 )
 
 if (WIN32)
-    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/mc3dit.rc")
+    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/resources/mc3dit.rc")
 endif()
 
 add_executable(MC3dit WIN32
         main.cpp
-        mainwindow.ui
-        mainwindow.h
-        mainwindow.cpp
-        utils.h
-        utils.cpp
-        DATFile.h
-        DATFile.cpp
+        ui/mainwindow.ui
+        widgets/mainwindow.h
+        widgets/mainwindow.cpp
+        misc/utils.h
+        misc/utils.cpp
+        widgets/datfile.h
+        widgets/datfile.cpp
+        widgets/dcfile.cpp
+        widgets/dcfile.h
 
         ${APP_ICON_RESOURCE_WINDOWS}
 )

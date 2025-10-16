@@ -1,6 +1,6 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "utils.h"
+#include "../misc/utils.h"
 #include "DATFile.h"
 
 #include <QDragLeaveEvent>
@@ -113,6 +113,9 @@ void MainWindow::dropEvent(QDropEvent *Event) {
                         if (NewProgressAmount >= MainUI->ProgressBar->maximum())
                             MainUI->ProgressBar->hide();
                     });
+                    connect(NewDatFile, &DATFile::ExportFinished, this, [this]() {
+                        ResetButton(MainUI->UnpackButton, "Unpack");
+                    });
                     NewDatFile->ReadDaveFile();
                     MainUI->TabWidget->addTab(NewDatFile, NewDatFile->GetFileName());
                     MainUI->TabWidget->setCurrentWidget(NewDatFile);
@@ -137,10 +140,7 @@ void MainWindow::OnUnpackButtonClicked() {
     MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
     if (QFileInfo(Widget->GetFilePath()).isFile()) {
         PlayButtonAnimation(MainUI->UnpackButton, "Unpacking");
-        QStringList Arguments = {"X", Widget->GetFilePath()};
-        RunDaveScript(Arguments, [&](int, QProcess::ExitStatus) {
-            ResetButton(MainUI->UnpackButton, "Unpack");
-        });
+        Widget->ExportFiles();
     }
     // else {
     //     QMessageBox::critical(this, "Invalid Directory", QString("%1 is not a valid directory, please select another one.").arg(Widget->GetFilePath()));
