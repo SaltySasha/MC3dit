@@ -39,6 +39,8 @@ private:
 
     void OnUnpackButtonClicked();
     void OnPackButtonClicked();
+    void OnPackBrowseButtonClicked();
+    void OnUnpackBrowseButtonClicked();
 
     QTimer* ButtonAnimationTimer = new QTimer(this);
     void PlayButtonAnimation(QPushButton* InButton, const QString& InButtonText);

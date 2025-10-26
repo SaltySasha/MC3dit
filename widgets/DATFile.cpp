@@ -12,7 +12,7 @@ DATFile::DATFile(const QString &InFilePath) {
     ItemModel->setSortRole(Qt::UserRole + 1);
 }
 
-void DATFile::ReadDaveFile() {
+bool DATFile::ReadDaveFile() {
     if (QFile File(FileInfo.filePath()); File.exists()) {
         if (!File.open(QIODeviceBase::ReadOnly)) {
             QMessageBox::warning(this, "No File", QString("Could not find %1 with reason: %2").arg(FileInfo.fileName(), File.errorString()));
@@ -71,15 +71,18 @@ void DATFile::ReadDaveFile() {
                 AddVirtualPath(FileName, NameOffset, FileOffset, FileSizeFull, FileSizeCompressed);
                 emit UpdateProgressBar(i + 1);
             }
-
         }
         else {
             QMessageBox::warning(this, "Non Dave File Detected", QString("%1 is not a Dave file.").arg(FileInfo.fileName()));
+            return false;
         }
 
         File.close();
         ItemModel->sort(0, Qt::AscendingOrder);
+        return true;
     }
+
+    return false;
 }
 
 QString DATFile::ReadString(QDataStream &InStream) {
@@ -157,10 +160,11 @@ void DATFile::AddVirtualPath(const QString &InVirtualPath, quint32 InNameOffset,
 }
 
 // TODO: Export on separate thread, maybe even more than one (I am speed)
-void DATFile::ExportFiles() {
+void DATFile::UnpackFiles(QString InFolderPath) {
     if (QFile DATFile(FileInfo.filePath()); DATFile.exists()) {
         if (!DATFile.open(QIODeviceBase::ReadOnly)) {
-            QMessageBox::warning(this, "No File", QString("Could not find %1 with reason: %2").arg(FileInfo.fileName(), DATFile.errorString()));
+            QMessageBox::critical(this, "Couldn't Open", QString("Could not open %1 with reason: %2").arg(FileInfo.fileName(), DATFile.errorString()));
+            return;
         }
 
         emit SetProgressBarMax(Entries);
@@ -172,11 +176,11 @@ void DATFile::ExportFiles() {
             if (File->GetFileSizeFull() != File->GetFileSizeCompressed()) {
                 Data = Decompress(Data, File->GetFileSizeFull());
             }
-            QString FilePath = MakeFileDirectory() + "/" + File->GetFilePath();
-            QFile NewFile(FilePath);
+            QString FilePath = InFolderPath + "/" + GetFileName(false) + "/";
+            QFile NewFile(FilePath + File->GetFilePath());
 
             QDir Directory;
-            if (Directory.mkpath(MakeFileDirectory() + "/" + File->GetPath()) && NewFile.open(QIODevice::ReadWrite)) {
+            if (Directory.mkpath(FilePath + File->GetPath()) && NewFile.open(QIODevice::ReadWrite)) {
                 NewFile.write(Data);
                 NewFile.close();
             }
@@ -188,4 +192,10 @@ void DATFile::ExportFiles() {
         DATFile.close();
         emit ExportFinished();
     }
+    else
+        QMessageBox::critical(this, "No File", QString("Could not find %1 with reason: %2").arg(FileInfo.fileName(), DATFile.errorString()));
+}
+
+void DATFile::PackFiles(QString InFolderPath) {
+
 }

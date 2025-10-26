@@ -133,7 +133,7 @@
        <item>
         <widget class="QPushButton" name="BrowseUnpackButton">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -202,7 +202,7 @@
        <item>
         <widget class="QPushButton" name="BrowsePackButton">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">

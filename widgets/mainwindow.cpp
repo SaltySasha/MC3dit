@@ -7,6 +7,7 @@
 #include <QMimeData>
 #include <QProcess>
 #include <QAbstractFileIconProvider>
+#include <QFileDialog>
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), MainUI(new Ui::MainWindow) {
@@ -17,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), MainUI(new Ui::Ma
 
     connect(MainUI->UnpackButton, &QPushButton::clicked, this, &MainWindow::OnUnpackButtonClicked);
     connect(MainUI->PackButton, &QPushButton::clicked, this, &MainWindow::OnPackButtonClicked);
+    connect(MainUI->BrowsePackButton, &QPushButton::clicked, this, &MainWindow::OnPackBrowseButtonClicked);
+    connect(MainUI->BrowseUnpackButton, &QPushButton::clicked, this, &MainWindow::OnUnpackBrowseButtonClicked);
 
 
     connect(MainUI->TabWidget, &QTabWidget::currentChanged, [this](int Index) {
@@ -26,8 +29,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), MainUI(new Ui::Ma
             Widget->GetFileType() == "Dave" ? MainUI->PackSection->show() : MainUI->PackSection->hide();
             MainUI->UnpackSection->show();
 
-            MainUI->UnpackLineEdit->setText(Widget->MakeFileDirectory());
-            MainUI->PackLineEdit->setText(Widget->GetFilePath());
+            MainUI->UnpackLineEdit->setText(!Widget->GetUnpackDirectory().isEmpty() ? Widget->GetUnpackDirectory() : Widget->GetFileDirectory());
+            MainUI->PackLineEdit->setText(!Widget->GetPackPath().isEmpty() ? Widget->GetPackPath() : Widget->GetFilePath());
         }
         else {
             MainUI->UnpackLineEdit->clear();
@@ -116,10 +119,13 @@ void MainWindow::dropEvent(QDropEvent *Event) {
                     connect(NewDatFile, &DATFile::ExportFinished, this, [this]() {
                         ResetButton(MainUI->UnpackButton, "Unpack");
                     });
-                    NewDatFile->ReadDaveFile();
-                    MainUI->TabWidget->addTab(NewDatFile, NewDatFile->GetFileName());
-                    MainUI->TabWidget->setCurrentWidget(NewDatFile);
-                    MainUI->TabWidget->tabBar()->setTabToolTip(MainUI->TabWidget->currentIndex(), NewDatFile->GetFilePath());
+                    if (NewDatFile->ReadDaveFile()) {
+                        MainUI->TabWidget->addTab(NewDatFile, NewDatFile->GetFileName());
+                        MainUI->TabWidget->setCurrentWidget(NewDatFile);
+                        MainUI->TabWidget->tabBar()->setTabToolTip(MainUI->TabWidget->currentIndex(), NewDatFile->GetFilePath());
+                    }
+                    else
+                        NewDatFile->deleteLater();
                 }
                 else
                     QMessageBox::warning(this, "Invalid File", QString("%1 is not a DAT file!").arg(QFileInfo(File).fileName()));
@@ -137,26 +143,46 @@ void MainWindow::SetButtonLock(bool AreButtonsLocked) {
 
 void MainWindow::OnUnpackButtonClicked() {
     DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->currentWidget());
-    MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
     if (QFileInfo(Widget->GetFilePath()).isFile()) {
+        MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
         PlayButtonAnimation(MainUI->UnpackButton, "Unpacking");
-        Widget->ExportFiles();
+        Widget->UnpackFiles(MainUI->UnpackLineEdit->text());
     }
-    // else {
-    //     QMessageBox::critical(this, "Invalid Directory", QString("%1 is not a valid directory, please select another one.").arg(Widget->GetFilePath()));
-    // }
+    else {
+        QMessageBox::critical(this, "No File", QString("Could not find %1.").arg(Widget->GetFileName()));
+    }
 }
 
 void MainWindow::OnPackButtonClicked() {
     DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->currentWidget());
-    if (QFileInfo(Widget->GetFilePath()).isFile()) {
+    if (QFileInfo(Widget->GetFilePath()).isFile() && QDir(Widget->MakeFileDirectory()).exists()) {
         PlayButtonAnimation(MainUI->PackButton, "Packing");
         MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
-        QStringList Arguments = {"B", "-ca", "-cn", "-cf", "-fc", "1", Widget->MakeFileDirectory(), Widget->GetFilePath()};
+        QStringList Arguments = {"B", "-ca", "-cn", "-cf", "-fc", "1", Widget->MakeFileDirectory(), MainUI->PackLineEdit->text()};
         RunDaveScript(Arguments, [&](int, QProcess::ExitStatus) {
             ResetButton(MainUI->PackButton, "Pack");
             MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->show();
         });
+    }
+    else
+        QMessageBox::critical(this, "Couldn't Pack File", QString("Could not find folder:\n %1").arg(Widget->MakeFileDirectory()));
+}
+
+void MainWindow::OnPackBrowseButtonClicked() {
+    QString FilePath = QFileDialog::getExistingDirectory(this, "Choose Pack Destination", MainUI->UnpackLineEdit->text(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (!FilePath.isEmpty()) {
+        DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->currentWidget());
+        Widget->SetPackPath(FilePath + "/" + Widget->GetFileName());
+        MainUI->PackLineEdit->setText(Widget->GetPackPath());
+    }
+}
+
+void MainWindow::OnUnpackBrowseButtonClicked() {
+    QString FolderPath = QFileDialog::getExistingDirectory(this, "Choose Unpack Destination", MainUI->UnpackLineEdit->text(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (!FolderPath.isEmpty()) {
+        DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->currentWidget());
+        Widget->SetUnpackDirectory(FolderPath);
+        MainUI->UnpackLineEdit->setText(Widget->GetUnpackDirectory());
     }
 }
 

@@ -11,13 +11,18 @@ class DATFile : public QTreeView {
 public:
     explicit DATFile(const QString &InFilePath);
 
-    void ReadDaveFile();
-    void ExportFiles();
-    QString GetFileName() const {return FileInfo.fileName();}
+    bool ReadDaveFile();
+    void UnpackFiles(QString InFolderPath);
+    void PackFiles(QString InFolderPath);
+    void SetUnpackDirectory(QString InFolderPath) {UnpackDirectory = InFolderPath;}
+    void SetPackPath(QString InFilePath) {PackPath = InFilePath;}
+    QString GetFileName(bool IsFullFileName = true) const {return IsFullFileName ? FileInfo.fileName() : FileInfo.fileName().left(FileInfo.fileName().length() - 4);}
     QString GetFileType() const {return FileType;}
     QString GetFilePath() const {return FileInfo.absoluteFilePath();}
     QString GetFileDirectory() const {return FileInfo.absolutePath();}
     QString MakeFileDirectory() const {return FileInfo.absoluteFilePath().left(FileInfo.absoluteFilePath().length() - 4);}
+    QString GetUnpackDirectory() const {return UnpackDirectory;}
+    QString GetPackPath() const {return PackPath;}
 
 signals:
     void SetProgressBarMax(quint32 NewMax);
@@ -31,6 +36,8 @@ private:
     QFileInfo FileInfo;
     QStandardItemModel *ItemModel;
     QList<DCFile*> Files;
+    QString UnpackDirectory;
+    QString PackPath;
 
     QString FileType;
     quint32 Entries;
