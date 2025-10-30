@@ -1,8 +1,9 @@
 ﻿#include "datfile.h"
 #include "../misc/utils.h"
 #include <QAbstractFileIconProvider>
-#include <QDir>
+#include <QFileDialog>
 #include <QMessageBox>
+#include <QMenu>
 
 DATFile::DATFile(const QString &InFilePath) {
     FileInfo.setFile(InFilePath);
@@ -10,6 +11,8 @@ DATFile::DATFile(const QString &InFilePath) {
     QTreeView::setModel(ItemModel);
     ItemModel->setHorizontalHeaderLabels({"Name"}); //TODO:, "Size"});
     ItemModel->setSortRole(Qt::UserRole + 1);
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &QTreeView::customContextMenuRequested, this, &DATFile::OpenContextMenu);
 }
 
 bool DATFile::ReadDaveFile() {
@@ -57,7 +60,7 @@ bool DATFile::ReadDaveFile() {
                     QString PreviousFileName = FileName;
                     FileName.clear();
                     if (NameBits[0] >= 0x38) {
-                        qint32 DeduplicatedSize = (NameBits.takeAt(1) - 0x20) * 8 + NameBits.takeAt(0) - 0x38;
+                        quint32 DeduplicatedSize = (NameBits.takeAt(1) - 0x20) * 8 + NameBits.takeAt(0) - 0x38;
                         FileName = PreviousFileName.left(DeduplicatedSize);
                     }
                     while (!NameBits.isEmpty() && NameBits.first() != 0) {
@@ -85,7 +88,7 @@ bool DATFile::ReadDaveFile() {
     return false;
 }
 
-QString DATFile::ReadString(QDataStream &InStream) {
+QString DATFile::ReadString(QDataStream &InStream) const {
     QString Result;
     char CurrentChar;
 
@@ -100,7 +103,7 @@ QString DATFile::ReadString(QDataStream &InStream) {
     return Result;
 }
 
-QList<quint32> DATFile::ReadBits(QDataStream &InStream) {
+QList<quint32> DATFile::ReadBits(QDataStream &InStream) const {
     QList<quint32> Result;
     Result.reserve(4);
 
@@ -124,7 +127,7 @@ void DATFile::AddVirtualPath(const QString &InVirtualPath, quint32 InNameOffset,
     for (int i = 0; i < Parts.size(); ++i) {
         Part.clear();
         Part = Parts[i];
-        bool IsFile = (i == Parts.size() - 1);
+        const bool IsFile = (i == Parts.size() - 1);
 
         Item = nullptr;
         for (int j = 0; j < Parent->rowCount(); ++j) {
@@ -137,7 +140,7 @@ void DATFile::AddVirtualPath(const QString &InVirtualPath, quint32 InNameOffset,
 
         if (!Item) {
             if (IsFile) {
-                DCFile *NewFile = new DCFile(InVirtualPath);
+                auto *NewFile = new DCFile(InVirtualPath);
                 NewFile->SetNameOffset(InNameOffset);
                 NewFile->SetFileOffset(InFileOffset);
                 NewFile->SetFileSizeFull(InFileSizeFull);
@@ -159,8 +162,51 @@ void DATFile::AddVirtualPath(const QString &InVirtualPath, quint32 InNameOffset,
     }
 }
 
+void DATFile::OpenContextMenu() {
+    auto File = dynamic_cast<DCFile*>(ItemModel->itemFromIndex(currentIndex()));
+    if (File->GetFileSizeFull() != 0) {
+        auto* NewMenu = new QMenu(this);
+        QAction* Open = NewMenu->addAction("Export");
+        connect(Open, &QAction::triggered, this, &DATFile::ExportSingleFile);
+        NewMenu->exec(QCursor::pos());
+        NewMenu->deleteLater();
+    }
+}
+
+void DATFile::ExportSingleFile() {
+    if (QFile DATFile(FileInfo.filePath()); DATFile.exists()) {
+        if (!DATFile.open(QIODeviceBase::ReadOnly)) {
+            QMessageBox::critical(this, "Couldn't Open", QString("Could not open %1 with reason: %2").arg(FileInfo.fileName(), DATFile.errorString()));
+            return;
+        }
+
+        QString FolderPath = QFileDialog::getExistingDirectory(this, "Choose Pack Destination", QDir::homePath(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+        if (!FolderPath.isEmpty()) {
+            auto File = dynamic_cast<DCFile*>(ItemModel->itemFromIndex(currentIndex()));
+            DATFile.seek(File->GetFileOffset());
+            QByteArray Data = DATFile.read(File->GetFileSizeCompressed());
+            if (File->GetFileSizeFull() != File->GetFileSizeCompressed()) {
+                Data = Decompress(Data, File->GetFileSizeFull());
+            }
+
+            QString FilePath = FolderPath + "/";
+            QFile NewFile(FilePath + File->GetFileName());
+            QDir Directory;
+            if (Directory.mkpath(FilePath) && NewFile.open(QIODevice::WriteOnly)) {
+                NewFile.write(Data);
+                NewFile.close();
+            }
+        }
+
+        DATFile.close();
+    }
+    else
+        QMessageBox::critical(this, "No File", QString("Could not find %1 with reason: %2").arg(FileInfo.fileName(), DATFile.errorString()));
+}
+
+
 // TODO: Export on separate thread, maybe even more than one (I am speed)
-void DATFile::UnpackFiles(QString InFolderPath) {
+void DATFile::UnpackFiles(const QString& InFolderPath) {
     if (QFile DATFile(FileInfo.filePath()); DATFile.exists()) {
         if (!DATFile.open(QIODeviceBase::ReadOnly)) {
             QMessageBox::critical(this, "Couldn't Open", QString("Could not open %1 with reason: %2").arg(FileInfo.fileName(), DATFile.errorString()));
@@ -180,7 +226,7 @@ void DATFile::UnpackFiles(QString InFolderPath) {
             QFile NewFile(FilePath + File->GetFilePath());
 
             QDir Directory;
-            if (Directory.mkpath(FilePath + File->GetPath()) && NewFile.open(QIODevice::ReadWrite)) {
+            if (Directory.mkpath(FilePath + File->GetPath()) && NewFile.open(QIODevice::WriteOnly)) {
                 NewFile.write(Data);
                 NewFile.close();
             }
@@ -196,6 +242,6 @@ void DATFile::UnpackFiles(QString InFolderPath) {
         QMessageBox::critical(this, "No File", QString("Could not find %1 with reason: %2").arg(FileInfo.fileName(), DATFile.errorString()));
 }
 
-void DATFile::PackFiles(QString InFolderPath) {
+void DATFile::PackFiles(const QString& InFolderPath) const {
 
 }

@@ -29,7 +29,7 @@ public:
     void dragMoveEvent(QDragMoveEvent *Event) override;
     void dropEvent(QDropEvent *Event) override;
 
-    void SetButtonLock(bool AreButtonsLocked);
+    void SetButtonLock(bool AreButtonsLocked) const;
 
     QString AssetPath;
 
@@ -45,7 +45,4 @@ private:
     QTimer* ButtonAnimationTimer = new QTimer(this);
     void PlayButtonAnimation(QPushButton* InButton, const QString& InButtonText);
     void ResetButton(QPushButton* InButton, const QString& InButtonText);
-
-    QMap<QWidget*, QTreeView*> TabToTreeViewMap;
-    QMap<QWidget*, QStandardItemModel*> TabToModelMap;
 };

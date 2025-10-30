@@ -12,17 +12,18 @@ public:
     explicit DATFile(const QString &InFilePath);
 
     bool ReadDaveFile();
-    void UnpackFiles(QString InFolderPath);
-    void PackFiles(QString InFolderPath);
-    void SetUnpackDirectory(QString InFolderPath) {UnpackDirectory = InFolderPath;}
-    void SetPackPath(QString InFilePath) {PackPath = InFilePath;}
-    QString GetFileName(bool IsFullFileName = true) const {return IsFullFileName ? FileInfo.fileName() : FileInfo.fileName().left(FileInfo.fileName().length() - 4);}
-    QString GetFileType() const {return FileType;}
-    QString GetFilePath() const {return FileInfo.absoluteFilePath();}
-    QString GetFileDirectory() const {return FileInfo.absolutePath();}
-    QString MakeFileDirectory() const {return FileInfo.absoluteFilePath().left(FileInfo.absoluteFilePath().length() - 4);}
-    QString GetUnpackDirectory() const {return UnpackDirectory;}
-    QString GetPackPath() const {return PackPath;}
+    void UnpackFiles(const QString& InFolderPath);
+    void PackFiles(const QString& InFolderPath) const;
+    void SetUnpackDirectory(const QString &InFolderPath) {UnpackDirectory = InFolderPath;}
+    void SetPackPath(const QString &InFilePath) {PackPath = InFilePath;}
+
+    [[nodiscard]] QString GetFileName(bool IsFullFileName = true) const {return IsFullFileName ? FileInfo.fileName() : FileInfo.fileName().left(FileInfo.fileName().length() - 4);}
+    [[nodiscard]] QString GetFileType() const {return FileType;}
+    [[nodiscard]] QString GetFilePath() const {return FileInfo.absoluteFilePath();}
+    [[nodiscard]] QString GetFileDirectory() const {return FileInfo.absolutePath();}
+    [[nodiscard]] QString MakeFileDirectory() const {return FileInfo.absoluteFilePath().left(FileInfo.absoluteFilePath().length() - 4);}
+    [[nodiscard]] QString GetUnpackDirectory() const {return UnpackDirectory;}
+    [[nodiscard]] QString GetPackPath() const {return PackPath;}
 
 signals:
     void SetProgressBarMax(quint32 NewMax);
@@ -40,12 +41,14 @@ private:
     QString PackPath;
 
     QString FileType;
-    quint32 Entries;
-    quint32 FileSize;
-    quint32 FileNameSize;
+    quint32 Entries{};
+    quint32 FileSize{};
+    quint32 FileNameSize{};
 
-    QString ReadString(QDataStream &InStream);
-    QList<quint32> ReadBits(QDataStream &InStream);
+    QString ReadString(QDataStream &InStream) const;
+    QList<quint32> ReadBits(QDataStream &InStream) const;
     void AddVirtualPath(const QString& InVirtualPath, quint32 InNameOffset, quint32 InFileOffset, quint32 InFileSizeFull, quint32 InFileSizeCompressed);
+    void OpenContextMenu();
+    void ExportSingleFile();
 
 };

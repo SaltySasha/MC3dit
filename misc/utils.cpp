@@ -7,11 +7,11 @@
 #include <QAbstractFileIconProvider>
 #include <QtZlib/zlib.h>
 
-void RunDaveScript(QStringList InArguments, std::function<void(int, QProcess::ExitStatus)> OnFinishedCallback) {
+void RunDaveScript(QStringList InArguments, const std::function<void(int, QProcess::ExitStatus)>& OnFinishedCallback) {
     QString Program = "python";
     QString DaveScript = QDir::currentPath() + "/scripts/dave.py";
     InArguments.insert(0, DaveScript);
-    QProcess* Process = new QProcess();
+    auto* Process = new QProcess();
     Process->setProcessChannelMode(QProcess::MergedChannels);
 
     QObject::connect(Process, &QProcess::readyReadStandardOutput, [Process]() {
@@ -52,11 +52,11 @@ QByteArray Decompress(const QByteArray &InData, quint32 InDecompressedSize) {
 
     // -15 = raw deflate
     if (inflateInit2(&ZStream, -15) != Z_OK)
-        return QByteArray();
+        return {};
 
     if (inflate(&ZStream, Z_FINISH) != Z_STREAM_END) {
         inflateEnd(&ZStream);
-        return QByteArray();
+        return {};
     }
 
     OutBytes.resize(ZStream.total_out);

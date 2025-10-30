@@ -4,6 +4,6 @@
 
 DCFile::DCFile(const QString &InString) : QStandardItem(QFileInfo(InString).fileName()) {
     setIcon(QAbstractFileIconProvider().icon(QAbstractFileIconProvider::File));
-    qDebug() << "Creating file " << InString;
+    //qDebug() << "Creating file " << InString;
     FileInfo.setFile(InString);
 }

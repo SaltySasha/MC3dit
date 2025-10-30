@@ -6,7 +6,6 @@
 #include <QDragLeaveEvent>
 #include <QMimeData>
 #include <QProcess>
-#include <QAbstractFileIconProvider>
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -23,9 +22,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), MainUI(new Ui::Ma
 
 
     connect(MainUI->TabWidget, &QTabWidget::currentChanged, [this](int Index) {
-        DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->widget(Index));
-
-        if (Widget) {
+        if (auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->widget(Index))) {
             Widget->GetFileType() == "Dave" ? MainUI->PackSection->show() : MainUI->PackSection->hide();
             MainUI->UnpackSection->show();
 
@@ -39,25 +36,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), MainUI(new Ui::Ma
             MainUI->UnpackSection->hide();
         }
     });
-    connect(MainUI->TabWidget, &QTabWidget::tabCloseRequested, [this](int Index) {
-        QWidget* Widget = MainUI->TabWidget->widget(Index);
-
-        QStandardItemModel* Model = TabToModelMap.value(Widget, nullptr);
-        QTreeView* TreeView = TabToTreeViewMap.value(Widget, nullptr);
-
-        TabToModelMap.remove(Widget);
-        TabToTreeViewMap.remove(Widget);
+    connect(MainUI->TabWidget, &QTabWidget::tabCloseRequested, [this](const int Index) {
+        auto TreeView = dynamic_cast<QTreeView*>(MainUI->TabWidget->widget(Index));
 
         if (TreeView) {
+            static_cast<QStandardItemModel*>(TreeView->model())->clear();
+            TreeView->model()->deleteLater();
             TreeView->setModel(nullptr);
+            TreeView->deleteLater();
         }
-
-        if (Model) {
-            Model->clear();
-            delete Model;
-        }
-
-        MainUI->TabWidget->removeTab(Index);
     });
 }
 
@@ -91,11 +78,11 @@ void MainWindow::dropEvent(QDropEvent *Event) {
         Event->setDropAction(Qt::CopyAction);
         Event->accept();
 
-        for (auto Url : Event->mimeData()->urls()) {
+        for (const auto& Url : Event->mimeData()->urls()) {
             if (Url.isLocalFile()) {
                 QString File = Url.toLocalFile();
-                for (quint32 TabIndex = 0; TabIndex < MainUI->TabWidget->count(); TabIndex++) {
-                    DATFile* Tab = static_cast<DATFile*>(MainUI->TabWidget->widget(TabIndex));
+                for (qint32 TabIndex = 0; TabIndex < MainUI->TabWidget->count(); TabIndex++) {
+                    auto* Tab = dynamic_cast<DATFile*>(MainUI->TabWidget->widget(TabIndex));
                     if (Tab->GetFilePath() == File) {
                         MainUI->TabWidget->setCurrentWidget(Tab);
                         return;
@@ -104,14 +91,13 @@ void MainWindow::dropEvent(QDropEvent *Event) {
 
                 if (File.endsWith(".dat", Qt::CaseInsensitive)) {
                     AssetPath = Url.toLocalFile();
-                    QFileInfo FileInfo(AssetPath);
 
-                    DATFile *NewDatFile = new DATFile(AssetPath);
-                    connect(NewDatFile, &DATFile::SetProgressBarMax, this, [this](quint32 NewMax) {
+                    auto *NewDatFile = new DATFile(AssetPath);
+                    connect(NewDatFile, &DATFile::SetProgressBarMax, this, [this](qint32 NewMax) {
                         MainUI->ProgressBar->show();
                         MainUI->ProgressBar->setMaximum(NewMax);
                     });
-                    connect(NewDatFile, &DATFile::UpdateProgressBar, this, [this](quint32 NewProgressAmount) {
+                    connect(NewDatFile, &DATFile::UpdateProgressBar, this, [this](qint32 NewProgressAmount) {
                         MainUI->ProgressBar->setValue(NewProgressAmount);
                         if (NewProgressAmount >= MainUI->ProgressBar->maximum())
                             MainUI->ProgressBar->hide();
@@ -136,13 +122,13 @@ void MainWindow::dropEvent(QDropEvent *Event) {
         Event->ignore();
 }
 
-void MainWindow::SetButtonLock(bool AreButtonsLocked) {
+void MainWindow::SetButtonLock(const bool AreButtonsLocked) const {
     MainUI->PackButton->setEnabled(AreButtonsLocked);
     MainUI->UnpackButton->setEnabled(AreButtonsLocked);
 }
 
 void MainWindow::OnUnpackButtonClicked() {
-    DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->currentWidget());
+    auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->currentWidget());
     if (QFileInfo(Widget->GetFilePath()).isFile()) {
         MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
         PlayButtonAnimation(MainUI->UnpackButton, "Unpacking");
@@ -154,7 +140,7 @@ void MainWindow::OnUnpackButtonClicked() {
 }
 
 void MainWindow::OnPackButtonClicked() {
-    DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->currentWidget());
+    auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->currentWidget());
     if (QFileInfo(Widget->GetFilePath()).isFile() && QDir(Widget->MakeFileDirectory()).exists()) {
         PlayButtonAnimation(MainUI->PackButton, "Packing");
         MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
@@ -171,7 +157,7 @@ void MainWindow::OnPackButtonClicked() {
 void MainWindow::OnPackBrowseButtonClicked() {
     QString FilePath = QFileDialog::getExistingDirectory(this, "Choose Pack Destination", MainUI->UnpackLineEdit->text(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (!FilePath.isEmpty()) {
-        DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->currentWidget());
+        auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->currentWidget());
         Widget->SetPackPath(FilePath + "/" + Widget->GetFileName());
         MainUI->PackLineEdit->setText(Widget->GetPackPath());
     }
@@ -180,7 +166,7 @@ void MainWindow::OnPackBrowseButtonClicked() {
 void MainWindow::OnUnpackBrowseButtonClicked() {
     QString FolderPath = QFileDialog::getExistingDirectory(this, "Choose Unpack Destination", MainUI->UnpackLineEdit->text(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (!FolderPath.isEmpty()) {
-        DATFile *Widget = static_cast<DATFile*>(MainUI->TabWidget->currentWidget());
+        auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->currentWidget());
         Widget->SetUnpackDirectory(FolderPath);
         MainUI->UnpackLineEdit->setText(Widget->GetUnpackDirectory());
     }

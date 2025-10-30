@@ -7,20 +7,20 @@
 class DCFile : public QStandardItem {
 
 public:
-    DCFile(const QString &InString);
+    explicit DCFile(const QString &InString);
 
     void SetNameOffset(quint32 NewNameOffset){NameOffset = NewNameOffset;}
     void SetFileOffset(quint32 NewFileOffset){FileOffset = NewFileOffset;}
     void SetFileSizeFull(quint32 NewFileSizeFull){FileSizeFull = NewFileSizeFull;}
     void SetFileSizeCompressed(const quint32 NewFileSizeCompressed){FileSizeCompressed = NewFileSizeCompressed;}
 
-    quint32 GetNameOffset(){return NameOffset;}
-    quint32 GetFileOffset(){return FileOffset;}
-    quint32 GetFileSizeFull(){return FileSizeFull;}
-    quint32 GetFileSizeCompressed(){return FileSizeCompressed;}
-    QString GetFileName(){return FileInfo.fileName();}
-    QString GetFilePath(){return FileInfo.filePath();}
-    QString GetPath(){return FileInfo.path();}
+    [[nodiscard]] quint32 GetNameOffset() const{return NameOffset;}
+    [[nodiscard]] quint32 GetFileOffset() const{return FileOffset;}
+    [[nodiscard]] quint32 GetFileSizeFull() const{return FileSizeFull;}
+    [[nodiscard]] quint32 GetFileSizeCompressed() const{return FileSizeCompressed;}
+    [[nodiscard]] QString GetFileName() const {return FileInfo.fileName();}
+    [[nodiscard]] QString GetFilePath() const {return FileInfo.filePath();}
+    [[nodiscard]] QString GetPath() const {return FileInfo.path();}
 
 private:
     QFileInfo FileInfo;
