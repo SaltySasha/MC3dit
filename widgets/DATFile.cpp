@@ -164,7 +164,7 @@ void DATFile::AddVirtualPath(const QString &InVirtualPath, quint32 InNameOffset,
 
 void DATFile::OpenContextMenu() {
     auto File = dynamic_cast<DCFile*>(ItemModel->itemFromIndex(currentIndex()));
-    if (File->GetFileSizeFull() != 0) {
+    if (File) {
         auto* NewMenu = new QMenu(this);
         QAction* Open = NewMenu->addAction("Export");
         connect(Open, &QAction::triggered, this, &DATFile::ExportSingleFile);
