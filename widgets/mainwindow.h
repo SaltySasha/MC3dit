@@ -44,4 +44,6 @@ private:
     QTimer* buttonAnimationTimer = new QTimer(this);
     void playButtonAnimation(QPushButton* button, const QString& buttonText);
     void resetButton(QPushButton* button, const QString& buttonText);
+
+    void testMethod();
 };

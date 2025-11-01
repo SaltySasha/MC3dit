@@ -33,7 +33,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QTabWidget" name="TabWidget">
+     <widget class="QTabWidget" name="tabWidget">
       <property name="maximumSize">
        <size>
         <width>16777211</width>
@@ -77,7 +77,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QLabel" name="DropLabel">
+     <widget class="QLabel" name="dropLabel">
       <property name="font">
        <font>
         <family>Courier New</family>
@@ -97,7 +97,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QProgressBar" name="ProgressBar">
+     <widget class="QProgressBar" name="progressBar">
       <property name="font">
        <font>
         <family>Courier New</family>
@@ -111,13 +111,13 @@
      </widget>
     </item>
     <item>
-     <widget class="QWidget" name="UnpackSection" native="true">
+     <widget class="QWidget" name="unpackSection" native="true">
       <property name="enabled">
        <bool>true</bool>
       </property>
       <layout class="QHBoxLayout" name="UnpackSectionLayout">
        <item>
-        <widget class="QLineEdit" name="UnpackLineEdit">
+        <widget class="QLineEdit" name="unpackLineEdit">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -131,7 +131,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="BrowseUnpackButton">
+        <widget class="QPushButton" name="browseUnpackButton">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -154,7 +154,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="UnpackButton">
+        <widget class="QPushButton" name="unpackButton">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -183,10 +183,10 @@
      </widget>
     </item>
     <item>
-     <widget class="QWidget" name="PackSection" native="true">
+     <widget class="QWidget" name="packSection" native="true">
       <layout class="QHBoxLayout" name="PackSectionLayout">
        <item>
-        <widget class="QLineEdit" name="PackLineEdit">
+        <widget class="QLineEdit" name="packLineEdit">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -200,7 +200,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="BrowsePackButton">
+        <widget class="QPushButton" name="browsePackButton">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -223,7 +223,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="PackButton">
+        <widget class="QPushButton" name="packButton">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -255,6 +255,13 @@
         </widget>
        </item>
       </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="testButton">
+      <property name="text">
+       <string>PushButton</string>
+      </property>
      </widget>
     </item>
    </layout>
