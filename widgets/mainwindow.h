@@ -34,8 +34,9 @@ public:
 private:
     Ui::MainWindow *ui;
     QProcess* process_ = new QProcess(this);
-    QString assetPath_;
 
+    void onTabChanged(int index);
+    void onTabCloseRequested(int index);
     void onUnpackButtonClicked();
     void onPackButtonClicked();
     void onPackBrowseButtonClicked();

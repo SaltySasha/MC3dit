@@ -19,88 +19,91 @@ DATFile::DATFile(const QString &filePath) {
 }
 
 bool DATFile::readDaveFile() {
-        if (QFile file(fileInfo_.filePath()); file.exists()) {
-        if (!file.open(QIODeviceBase::ReadOnly)) {
-            QMessageBox::warning(this, "No File", QString("Could not find %1 with reason: %2").arg(fileInfo_.fileName(), file.errorString()));
-        }
-
-        fileType_ = file.read(4);
-        if (headerList_.contains(fileType_)) {
-            entries_ = toLittleEndian(file.read(4));
-            fileSize_ = toLittleEndian(file.read(4));
-            fileNameSize_ = toLittleEndian(file.read(4));
-
-            emit setProgressBarMax(entries_);
-
-            QString fileName;
-            quint32 nameOffset;
-            quint32 fileOffset;
-            quint32 fileSizeFull;
-            quint32 fileSizeCompressed;
-            for (quint32 i = 0; i < entries_; i++) {
-                file.seek(0x800 + i * 0x10);
-                nameOffset = toLittleEndian(file.read(4)) + fileSize_ + 0x800;
-                fileOffset = toLittleEndian(file.read(4));
-                fileSizeFull = toLittleEndian(file.read(4));
-                fileSizeCompressed = toLittleEndian(file.read(4));
-
-                file.seek(nameOffset);
-                fileName = readName(file, fileType_, fileName);
-
-                 //qDebug() << i << fileName << nameOffset << fileOffset << fileSizeFull << fileSizeCompressed;
-
-                addVirtualPath(fileName, nameOffset, fileOffset, fileSizeFull, fileSizeCompressed);
-                emit updateProgressBar(i + 1);
-            }
-        }
-        else {
-            QMessageBox::warning(this, "Non Dave File Detected", QString("%1 is not a Dave file.").arg(fileInfo_.fileName()));
-            return false;
-        }
-
-        file.close();
-        itemModel_->sort(0, Qt::AscendingOrder);
-        return true;
+    QFile file(fileInfo_.filePath());
+    if (!file.exists()) {
+        QMessageBox::critical(this, "No File", QString("Could not find %1 with reason:\n %2").arg(fileInfo_.fileName(), file.errorString()));
+        return false;
     }
 
-    return false;
+    if (!file.open(QIODeviceBase::ReadOnly)) {
+        QMessageBox::warning(this, "Unable To Open File", QString("Could not open %1 with reason:\n %2").arg(fileInfo_.fileName(), file.errorString()));
+        return false;
+    }
+
+    fileType_ = file.read(4);
+    if (!headerList_.contains(fileType_)) {
+        QMessageBox::warning(this, "Non Dave File Detected", QString("%1 is not a Dave file.").arg(fileInfo_.fileName()));
+        return false;
+    }
+
+    entries_ = toLittleEndian(file.read(4));
+    fileSize_ = toLittleEndian(file.read(4));
+    fileNameSize_ = toLittleEndian(file.read(4));
+
+    emit setProgressBarMax(entries_);
+
+    QString fileName;
+    quint32 nameOffset;
+    quint32 fileOffset;
+    quint32 fileSizeFull;
+    quint32 fileSizeCompressed;
+    for (quint32 i = 0; i < entries_; i++) {
+        file.seek(0x800 + i * 0x10);
+        nameOffset = toLittleEndian(file.read(4)) + fileSize_ + 0x800;
+        fileOffset = toLittleEndian(file.read(4));
+        fileSizeFull = toLittleEndian(file.read(4));
+        fileSizeCompressed = toLittleEndian(file.read(4));
+
+        file.seek(nameOffset);
+        fileName = readName(file, fileType_, fileName);
+
+        //qDebug() << i << fileName << nameOffset << fileOffset << fileSizeFull << fileSizeCompressed;
+
+        addVirtualPath(fileName, nameOffset, fileOffset, fileSizeFull, fileSizeCompressed);
+        emit updateProgressBar(i + 1);
+    }
+
+    file.close();
+    itemModel_->sort(0, Qt::AscendingOrder);
+    return true;
 }
 
 // TODO: Export on separate thread, maybe even more than one (I am speed)
 void DATFile::unpackFiles(const QString& folderPath) {
-    if (QFile datFile(fileInfo_.filePath()); datFile.exists()) {
-        if (!datFile.open(QIODeviceBase::ReadOnly)) {
-            QMessageBox::critical(this, "Couldn't Open", QString("Could not open %1 with reason: %2").arg(fileInfo_.fileName(), datFile.errorString()));
-            return;
-        }
-
-        emit setProgressBarMax(entries_);
-
-        quint32 fileNumber = 1;
-        for (const auto file : files_) {
-            datFile.seek(file->fileOffset());
-            QByteArray data = datFile.read(file->fileSizeCompressed());
-            if (file->fileSizeFull() != file->fileSizeCompressed()) {
-                data = decompress(data, file->fileSizeFull());
-            }
-            QString filePath = folderPath + "/" + GetFileName(false) + "/";
-            QFile newFile(filePath + file->filePath());
-
-            QDir dir;
-            if (dir.mkpath(filePath + file->path()) && newFile.open(QIODevice::WriteOnly)) {
-                newFile.write(data);
-                newFile.close();
-            }
-
-            emit updateProgressBar(fileNumber);
-            fileNumber++;
-        }
-
-        datFile.close();
-        emit exportFinished();
-    }
-    else
+    QFile datFile(fileInfo_.filePath());
+    if (!datFile.exists()) {
         QMessageBox::critical(this, "No File", QString("Could not find %1 with reason: %2").arg(fileInfo_.fileName(), datFile.errorString()));
+        return;
+    }
+    if (!datFile.open(QIODeviceBase::ReadOnly)) {
+        QMessageBox::warning(this, "Unable To Open File", QString("Could not open %1 with reason:\n %2").arg(fileInfo_.fileName(), datFile.errorString()));
+        return;
+    }
+
+    emit setProgressBarMax(entries_);
+
+    quint32 fileNumber = 1;
+    for (const auto file : files_) {
+        datFile.seek(file->fileOffset());
+        QByteArray data = datFile.read(file->fileSizeCompressed());
+        if (file->fileSizeFull() != file->fileSizeCompressed()) {
+            data = decompress(data, file->fileSizeFull());
+        }
+        QString filePath = folderPath + "/" + GetFileName(false) + "/";
+        QFile newFile(filePath + file->filePath());
+
+        QDir dir;
+        if (dir.mkpath(filePath + file->path()) && newFile.open(QIODevice::WriteOnly)) {
+            newFile.write(data);
+            newFile.close();
+        }
+
+        emit updateProgressBar(fileNumber);
+        fileNumber++;
+    }
+
+    datFile.close();
+    emit exportFinished();
 }
 
 void DATFile::packFiles(const QString& folderPath) const {
@@ -109,45 +112,50 @@ void DATFile::packFiles(const QString& folderPath) const {
 
 void DATFile::openContextMenu() {
     auto file = dynamic_cast<DCFile*>(itemModel_->itemFromIndex(currentIndex()));
-    if (file) {
-        auto* newMenu = new QMenu(this);
-        QAction* action = newMenu->addAction("Export");
-        connect(action, &QAction::triggered, this, &DATFile::exportSingleFile);
-        newMenu->exec(QCursor::pos());
-        newMenu->deleteLater();
-    }
+    if (!file)
+        return;
+
+    auto* newMenu = new QMenu(this);
+    QAction* action = newMenu->addAction("Export");
+    connect(action, &QAction::triggered, this, &DATFile::exportSingleFile);
+    newMenu->exec(QCursor::pos());
+    newMenu->deleteLater();
 }
 
 // TODO: Make function for both single and all file export functions
 void DATFile::exportSingleFile() {
-    if (QFile datFile(fileInfo_.filePath()); datFile.exists()) {
-        if (!datFile.open(QIODeviceBase::ReadOnly)) {
-            QMessageBox::critical(this, "Couldn't Open", QString("Could not open %1 with reason: %2").arg(fileInfo_.fileName(), datFile.errorString()));
-            return;
-        }
-
-        QString folderPath = QFileDialog::getExistingDirectory(this, "Choose Pack Destination", QDir::homePath(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-        if (!folderPath.isEmpty()) {
-            const auto file = dynamic_cast<DCFile*>(itemModel_->itemFromIndex(currentIndex()));
-            datFile.seek(file->fileOffset());
-            QByteArray data = datFile.read(file->fileSizeCompressed());
-            if (file->fileSizeFull() != file->fileSizeCompressed()) {
-                data = decompress(data, file->fileSizeFull());
-            }
-
-            QString filePath = folderPath + "/";
-            QFile newFile(filePath + file->fileName());
-            QDir dir;
-            if (dir.mkpath(filePath) && newFile.open(QIODevice::WriteOnly)) {
-                newFile.write(data);
-                newFile.close();
-            }
-        }
-
-        datFile.close();
-    }
-    else
+    QFile datFile(fileInfo_.filePath());
+    if (!datFile.exists()) {
         QMessageBox::critical(this, "No File", QString("Could not find %1 with reason: %2").arg(fileInfo_.fileName(), datFile.errorString()));
+        return;
+    }
+    if (!datFile.open(QIODeviceBase::ReadOnly)) {
+        QMessageBox::warning(this, "Unable To Open File", QString("Could not open %1 with reason:\n %2").arg(fileInfo_.fileName(), datFile.errorString()));
+        return;
+    }
+
+    QString folderPath = QFileDialog::getExistingDirectory(this, "Choose Pack Destination", QDir::homePath(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (!folderPath.isEmpty()) {
+        datFile.close();
+        return;
+    }
+
+    const auto file = dynamic_cast<DCFile*>(itemModel_->itemFromIndex(currentIndex()));
+    datFile.seek(file->fileOffset());
+    QByteArray data = datFile.read(file->fileSizeCompressed());
+    if (file->fileSizeFull() != file->fileSizeCompressed()) {
+        data = decompress(data, file->fileSizeFull());
+    }
+
+    QString filePath = folderPath + "/";
+    QFile newFile(filePath + file->fileName());
+    QDir dir;
+    if (dir.mkpath(filePath) && newFile.open(QIODevice::WriteOnly)) {
+        newFile.write(data);
+        newFile.close();
+    }
+
+    datFile.close();
 }
 
 // TODO: Potentially rework to speed up opening of file
