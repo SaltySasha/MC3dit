@@ -9,35 +9,35 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), MainUI(new Ui::MainWindow) {
-    MainUI->setupUi(this);
-    MainUI->ProgressBar->hide();
-    MainUI->PackSection->hide();
-    MainUI->UnpackSection->hide();
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
+    ui->setupUi(this);
+    ui->ProgressBar->hide();
+    ui->PackSection->hide();
+    ui->UnpackSection->hide();
 
-    connect(MainUI->UnpackButton, &QPushButton::clicked, this, &MainWindow::OnUnpackButtonClicked);
-    connect(MainUI->PackButton, &QPushButton::clicked, this, &MainWindow::OnPackButtonClicked);
-    connect(MainUI->BrowsePackButton, &QPushButton::clicked, this, &MainWindow::OnPackBrowseButtonClicked);
-    connect(MainUI->BrowseUnpackButton, &QPushButton::clicked, this, &MainWindow::OnUnpackBrowseButtonClicked);
+    connect(ui->UnpackButton, &QPushButton::clicked, this, &MainWindow::onUnpackButtonClicked);
+    connect(ui->PackButton, &QPushButton::clicked, this, &MainWindow::onPackButtonClicked);
+    connect(ui->BrowsePackButton, &QPushButton::clicked, this, &MainWindow::onPackBrowseButtonClicked);
+    connect(ui->BrowseUnpackButton, &QPushButton::clicked, this, &MainWindow::onUnpackBrowseButtonClicked);
 
 
-    connect(MainUI->TabWidget, &QTabWidget::currentChanged, [this](int Index) {
-        if (auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->widget(Index))) {
-            Widget->GetFileType() == "Dave" ? MainUI->PackSection->show() : MainUI->PackSection->hide();
-            MainUI->UnpackSection->show();
+    connect(ui->TabWidget, &QTabWidget::currentChanged, [this](int Index) {
+        if (auto *Widget = dynamic_cast<DATFile*>(ui->TabWidget->widget(Index))) {
+            Widget->fileType() == "Dave" ? ui->PackSection->show() : ui->PackSection->hide();
+            ui->UnpackSection->show();
 
-            MainUI->UnpackLineEdit->setText(!Widget->GetUnpackDirectory().isEmpty() ? Widget->GetUnpackDirectory() : Widget->GetFileDirectory());
-            MainUI->PackLineEdit->setText(!Widget->GetPackPath().isEmpty() ? Widget->GetPackPath() : Widget->GetFilePath());
+            ui->UnpackLineEdit->setText(!Widget->unpackDirectory().isEmpty() ? Widget->unpackDirectory() : Widget->fileDirectory());
+            ui->PackLineEdit->setText(!Widget->packPath().isEmpty() ? Widget->packPath() : Widget->filePath());
         }
         else {
-            MainUI->UnpackLineEdit->clear();
-            MainUI->PackLineEdit->clear();
-            MainUI->PackSection->hide();
-            MainUI->UnpackSection->hide();
+            ui->UnpackLineEdit->clear();
+            ui->PackLineEdit->clear();
+            ui->PackSection->hide();
+            ui->UnpackSection->hide();
         }
     });
-    connect(MainUI->TabWidget, &QTabWidget::tabCloseRequested, [this](const int Index) {
-        auto TreeView = dynamic_cast<QTreeView*>(MainUI->TabWidget->widget(Index));
+    connect(ui->TabWidget, &QTabWidget::tabCloseRequested, [this](const int Index) {
+        auto TreeView = dynamic_cast<QTreeView*>(ui->TabWidget->widget(Index));
 
         if (TreeView) {
             static_cast<QStandardItemModel*>(TreeView->model())->clear();
@@ -49,66 +49,66 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), MainUI(new Ui::Ma
 }
 
 MainWindow::~MainWindow() {
-    delete MainUI;
+    delete ui;
 }
 
-void MainWindow::dragEnterEvent(QDragEnterEvent *Event) {
-    QMainWindow::dragEnterEvent(Event);
+void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+    QMainWindow::dragEnterEvent(event);
 
-    if (Event->mimeData()->hasUrls())
-        Event->accept();
+    if (event->mimeData()->hasUrls())
+        event->accept();
     else
-        Event->ignore();
+        event->ignore();
 }
 
-void MainWindow::dragMoveEvent(QDragMoveEvent *Event) {
-    QMainWindow::dragMoveEvent(Event);
-    if (Event->mimeData()->hasUrls()) {
-        Event->setDropAction(Qt::CopyAction);
-        Event->accept();
+void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
+    QMainWindow::dragMoveEvent(event);
+    if (event->mimeData()->hasUrls()) {
+        event->setDropAction(Qt::CopyAction);
+        event->accept();
     }
     else
-        Event->ignore();
+        event->ignore();
 }
 
-void MainWindow::dropEvent(QDropEvent *Event) {
-    QMainWindow::dropEvent(Event);
+void MainWindow::dropEvent(QDropEvent *event) {
+    QMainWindow::dropEvent(event);
 
-    if (Event->mimeData()->hasUrls()) {
-        Event->setDropAction(Qt::CopyAction);
-        Event->accept();
+    if (event->mimeData()->hasUrls()) {
+        event->setDropAction(Qt::CopyAction);
+        event->accept();
 
-        for (const auto& Url : Event->mimeData()->urls()) {
+        for (const auto& Url : event->mimeData()->urls()) {
             if (Url.isLocalFile()) {
                 QString File = Url.toLocalFile();
-                for (qint32 TabIndex = 0; TabIndex < MainUI->TabWidget->count(); TabIndex++) {
-                    auto* Tab = dynamic_cast<DATFile*>(MainUI->TabWidget->widget(TabIndex));
-                    if (Tab->GetFilePath() == File) {
-                        MainUI->TabWidget->setCurrentWidget(Tab);
+                for (qint32 TabIndex = 0; TabIndex < ui->TabWidget->count(); TabIndex++) {
+                    auto* Tab = dynamic_cast<DATFile*>(ui->TabWidget->widget(TabIndex));
+                    if (Tab->filePath() == File) {
+                        ui->TabWidget->setCurrentWidget(Tab);
                         return;
                     }
                 }
 
                 if (File.endsWith(".dat", Qt::CaseInsensitive)) {
-                    AssetPath = Url.toLocalFile();
+                    assetPath_ = Url.toLocalFile();
 
-                    auto *NewDatFile = new DATFile(AssetPath);
-                    connect(NewDatFile, &DATFile::SetProgressBarMax, this, [this](qint32 NewMax) {
-                        MainUI->ProgressBar->show();
-                        MainUI->ProgressBar->setMaximum(NewMax);
+                    auto *NewDatFile = new DATFile(assetPath_);
+                    connect(NewDatFile, &DATFile::setProgressBarMax, this, [this](qint32 NewMax) {
+                        ui->ProgressBar->show();
+                        ui->ProgressBar->setMaximum(NewMax);
                     });
-                    connect(NewDatFile, &DATFile::UpdateProgressBar, this, [this](qint32 NewProgressAmount) {
-                        MainUI->ProgressBar->setValue(NewProgressAmount);
-                        if (NewProgressAmount >= MainUI->ProgressBar->maximum())
-                            MainUI->ProgressBar->hide();
+                    connect(NewDatFile, &DATFile::updateProgressBar, this, [this](qint32 NewProgressAmount) {
+                        ui->ProgressBar->setValue(NewProgressAmount);
+                        if (NewProgressAmount >= ui->ProgressBar->maximum())
+                            ui->ProgressBar->hide();
                     });
-                    connect(NewDatFile, &DATFile::ExportFinished, this, [this]() {
-                        ResetButton(MainUI->UnpackButton, "Unpack");
+                    connect(NewDatFile, &DATFile::exportFinished, this, [this]() {
+                        resetButton(ui->UnpackButton, "Unpack");
                     });
-                    if (NewDatFile->ReadDaveFile()) {
-                        MainUI->TabWidget->addTab(NewDatFile, NewDatFile->GetFileName());
-                        MainUI->TabWidget->setCurrentWidget(NewDatFile);
-                        MainUI->TabWidget->tabBar()->setTabToolTip(MainUI->TabWidget->currentIndex(), NewDatFile->GetFilePath());
+                    if (NewDatFile->readDaveFile()) {
+                        ui->TabWidget->addTab(NewDatFile, NewDatFile->GetFileName());
+                        ui->TabWidget->setCurrentWidget(NewDatFile);
+                        ui->TabWidget->tabBar()->setTabToolTip(ui->TabWidget->currentIndex(), NewDatFile->filePath());
                     }
                     else
                         NewDatFile->deleteLater();
@@ -119,74 +119,74 @@ void MainWindow::dropEvent(QDropEvent *Event) {
         }
     }
     else
-        Event->ignore();
+        event->ignore();
 }
 
-void MainWindow::SetButtonLock(const bool AreButtonsLocked) const {
-    MainUI->PackButton->setEnabled(AreButtonsLocked);
-    MainUI->UnpackButton->setEnabled(AreButtonsLocked);
+void MainWindow::setButtonLock(const bool locked) const {
+    ui->PackButton->setEnabled(locked);
+    ui->UnpackButton->setEnabled(locked);
 }
 
-void MainWindow::OnUnpackButtonClicked() {
-    auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->currentWidget());
-    if (QFileInfo(Widget->GetFilePath()).isFile()) {
-        MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
-        PlayButtonAnimation(MainUI->UnpackButton, "Unpacking");
-        Widget->UnpackFiles(MainUI->UnpackLineEdit->text());
+void MainWindow::onUnpackButtonClicked() {
+    auto *Widget = dynamic_cast<DATFile*>(ui->TabWidget->currentWidget());
+    if (QFileInfo(Widget->filePath()).isFile()) {
+        ui->TabWidget->tabBar()->tabButton(ui->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
+        playButtonAnimation(ui->UnpackButton, "Unpacking");
+        Widget->unpackFiles(ui->UnpackLineEdit->text());
     }
     else {
         QMessageBox::critical(this, "No File", QString("Could not find %1.").arg(Widget->GetFileName()));
     }
 }
 
-void MainWindow::OnPackButtonClicked() {
-    auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->currentWidget());
-    if (QFileInfo(Widget->GetFilePath()).isFile() && QDir(Widget->MakeFileDirectory()).exists()) {
-        PlayButtonAnimation(MainUI->PackButton, "Packing");
-        MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
-        QStringList Arguments = {"B", "-ca", "-cn", "-cf", "-fc", "1", Widget->MakeFileDirectory(), MainUI->PackLineEdit->text()};
-        RunDaveScript(Arguments, [&](int, QProcess::ExitStatus) {
-            ResetButton(MainUI->PackButton, "Pack");
-            MainUI->TabWidget->tabBar()->tabButton(MainUI->TabWidget->currentIndex(), QTabBar::RightSide)->show();
+void MainWindow::onPackButtonClicked() {
+    auto *Widget = dynamic_cast<DATFile*>(ui->TabWidget->currentWidget());
+    if (QFileInfo(Widget->filePath()).isFile() && QDir(Widget->makeFileDirectory()).exists()) {
+        playButtonAnimation(ui->PackButton, "Packing");
+        ui->TabWidget->tabBar()->tabButton(ui->TabWidget->currentIndex(), QTabBar::RightSide)->hide();
+        QStringList Arguments = {"B", "-ca", "-cn", "-cf", "-fc", "1", Widget->makeFileDirectory(), ui->PackLineEdit->text()};
+        DATFileUtils::runDaveScript(Arguments, [&](int, QProcess::ExitStatus) {
+            resetButton(ui->PackButton, "Pack");
+            ui->TabWidget->tabBar()->tabButton(ui->TabWidget->currentIndex(), QTabBar::RightSide)->show();
         });
     }
     else
-        QMessageBox::critical(this, "Couldn't Pack File", QString("Could not find folder:\n %1").arg(Widget->MakeFileDirectory()));
+        QMessageBox::critical(this, "Couldn't Pack File", QString("Could not find folder:\n %1").arg(Widget->makeFileDirectory()));
 }
 
-void MainWindow::OnPackBrowseButtonClicked() {
-    QString FilePath = QFileDialog::getExistingDirectory(this, "Choose Pack Destination", MainUI->UnpackLineEdit->text(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+void MainWindow::onPackBrowseButtonClicked() {
+    QString FilePath = QFileDialog::getExistingDirectory(this, "Choose Pack Destination", ui->UnpackLineEdit->text(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (!FilePath.isEmpty()) {
-        auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->currentWidget());
-        Widget->SetPackPath(FilePath + "/" + Widget->GetFileName());
-        MainUI->PackLineEdit->setText(Widget->GetPackPath());
+        auto *Widget = dynamic_cast<DATFile*>(ui->TabWidget->currentWidget());
+        Widget->setPackPath(FilePath + "/" + Widget->GetFileName());
+        ui->PackLineEdit->setText(Widget->packPath());
     }
 }
 
-void MainWindow::OnUnpackBrowseButtonClicked() {
-    QString FolderPath = QFileDialog::getExistingDirectory(this, "Choose Unpack Destination", MainUI->UnpackLineEdit->text(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+void MainWindow::onUnpackBrowseButtonClicked() {
+    QString FolderPath = QFileDialog::getExistingDirectory(this, "Choose Unpack Destination", ui->UnpackLineEdit->text(),QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (!FolderPath.isEmpty()) {
-        auto *Widget = dynamic_cast<DATFile*>(MainUI->TabWidget->currentWidget());
-        Widget->SetUnpackDirectory(FolderPath);
-        MainUI->UnpackLineEdit->setText(Widget->GetUnpackDirectory());
+        auto *Widget = dynamic_cast<DATFile*>(ui->TabWidget->currentWidget());
+        Widget->setUnpackDir(FolderPath);
+        ui->UnpackLineEdit->setText(Widget->unpackDirectory());
     }
 }
 
-void MainWindow::PlayButtonAnimation(QPushButton* InButton, const QString& InButtonText) {
-    SetButtonLock(false);
+void MainWindow::playButtonAnimation(QPushButton* button, const QString& buttonText) {
+    setButtonLock(false);
     QStringList AnimationText = {"", ".", "..", "..."};
     quint32 Index = 0;
-    connect(ButtonAnimationTimer, &QTimer::timeout, this, [=]() mutable {
-                InButton->setText(InButtonText + AnimationText[Index]);
+    connect(buttonAnimationTimer, &QTimer::timeout, this, [=]() mutable {
+                button->setText(buttonText + AnimationText[Index]);
                 Index = (Index + 1) % AnimationText.size();
             });
-    ButtonAnimationTimer->setInterval(0);
-    ButtonAnimationTimer->start(300);
+    buttonAnimationTimer->setInterval(0);
+    buttonAnimationTimer->start(300);
 }
 
-void MainWindow::ResetButton(QPushButton* InButton, const QString &InButtonText) {
-    SetButtonLock(true);
-    InButton->setText(InButtonText);
-    ButtonAnimationTimer->stop();
-    ButtonAnimationTimer->disconnect();
+void MainWindow::resetButton(QPushButton* button, const QString &buttonText) {
+    setButtonLock(true);
+    button->setText(buttonText);
+    buttonAnimationTimer->stop();
+    buttonAnimationTimer->disconnect();
 }

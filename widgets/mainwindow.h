@@ -25,24 +25,23 @@ public:
 
     ~MainWindow() override;
 
-    void dragEnterEvent(QDragEnterEvent *Event) override;
-    void dragMoveEvent(QDragMoveEvent *Event) override;
-    void dropEvent(QDropEvent *Event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
-    void SetButtonLock(bool AreButtonsLocked) const;
-
-    QString AssetPath;
+    void setButtonLock(bool locked) const;
 
 private:
-    Ui::MainWindow *MainUI;
-    QProcess* Process = new QProcess(this);
+    Ui::MainWindow *ui;
+    QProcess* process_ = new QProcess(this);
+    QString assetPath_;
 
-    void OnUnpackButtonClicked();
-    void OnPackButtonClicked();
-    void OnPackBrowseButtonClicked();
-    void OnUnpackBrowseButtonClicked();
+    void onUnpackButtonClicked();
+    void onPackButtonClicked();
+    void onPackBrowseButtonClicked();
+    void onUnpackBrowseButtonClicked();
 
-    QTimer* ButtonAnimationTimer = new QTimer(this);
-    void PlayButtonAnimation(QPushButton* InButton, const QString& InButtonText);
-    void ResetButton(QPushButton* InButton, const QString& InButtonText);
+    QTimer* buttonAnimationTimer = new QTimer(this);
+    void playButtonAnimation(QPushButton* button, const QString& buttonText);
+    void resetButton(QPushButton* button, const QString& buttonText);
 };

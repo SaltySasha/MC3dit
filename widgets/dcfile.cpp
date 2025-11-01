@@ -2,8 +2,8 @@
 
 #include <QAbstractFileIconProvider>
 
-DCFile::DCFile(const QString &InString) : QStandardItem(QFileInfo(InString).fileName()) {
+DCFile::DCFile(const QString &filePath) : QStandardItem(QFileInfo(filePath).fileName()) {
     setIcon(QAbstractFileIconProvider().icon(QAbstractFileIconProvider::File));
     //qDebug() << "Creating file " << InString;
-    FileInfo.setFile(InString);
+    fileInfo_.setFile(filePath);
 }

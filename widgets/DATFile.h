@@ -2,6 +2,7 @@
 
 #include "dcfile.h"
 #include <QFileInfo>
+#include <QProcess>
 #include <QStandardItemModel>
 #include <QTreeView>
 
@@ -9,46 +10,50 @@ class DATFile : public QTreeView {
     Q_OBJECT
 
 public:
-    explicit DATFile(const QString &InFilePath);
+    explicit DATFile(const QString &filePath);
 
-    bool ReadDaveFile();
-    void UnpackFiles(const QString& InFolderPath);
-    void PackFiles(const QString& InFolderPath) const;
-    void SetUnpackDirectory(const QString &InFolderPath) {UnpackDirectory = InFolderPath;}
-    void SetPackPath(const QString &InFilePath) {PackPath = InFilePath;}
+    bool readDaveFile();
+    void unpackFiles(const QString& folderPath);
+    void packFiles(const QString& folderPath) const;
 
-    [[nodiscard]] QString GetFileName(bool IsFullFileName = true) const {return IsFullFileName ? FileInfo.fileName() : FileInfo.fileName().left(FileInfo.fileName().length() - 4);}
-    [[nodiscard]] QString GetFileType() const {return FileType;}
-    [[nodiscard]] QString GetFilePath() const {return FileInfo.absoluteFilePath();}
-    [[nodiscard]] QString GetFileDirectory() const {return FileInfo.absolutePath();}
-    [[nodiscard]] QString MakeFileDirectory() const {return FileInfo.absoluteFilePath().left(FileInfo.absoluteFilePath().length() - 4);}
-    [[nodiscard]] QString GetUnpackDirectory() const {return UnpackDirectory;}
-    [[nodiscard]] QString GetPackPath() const {return PackPath;}
+    void setUnpackDir(const QString &folderPath) {unpackDirectory_ = folderPath;}
+    void setPackPath(const QString &filePath) {packPath_ = filePath;}
+
+    [[nodiscard]] QString GetFileName(bool IsFullFileName = true) const {return IsFullFileName ? fileInfo_.fileName() : fileInfo_.fileName().left(fileInfo_.fileName().length() - 4);}
+    [[nodiscard]] QString fileType() const {return fileType_;}
+    [[nodiscard]] QString filePath() const {return fileInfo_.absoluteFilePath();}
+    [[nodiscard]] QString fileDirectory() const {return fileInfo_.absolutePath();}
+    [[nodiscard]] QString makeFileDirectory() const {return fileInfo_.absoluteFilePath().left(fileInfo_.absoluteFilePath().length() - 4);}
+    [[nodiscard]] QString unpackDirectory() const {return unpackDirectory_;}
+    [[nodiscard]] QString packPath() const {return packPath_;}
 
 signals:
-    void SetProgressBarMax(quint32 NewMax);
-    void UpdateProgressBar(quint32 NewValue);
-    void ExportFinished();
+    void setProgressBarMax(quint32 newMax);
+    void updateProgressBar(quint32 newValue);
+    void exportFinished();
 
 private:
-    const QStringList DATHeaderList = {"Dave", "DAVE"}; // TODO, "Hash"}; - Add Hash file type support
-    const char DaveUsableChars[69] = "\x00 #$()-./?0123456789_abcdefghijklmnopqrstuvwxyz~\x7F";
+    const QStringList headerList_ = {"Dave", "DAVE"}; // TODO, "Hash"}; - Add Hash file type support
+    const char usableChars_[69] = "\x00 #$()-./?0123456789_abcdefghijklmnopqrstuvwxyz~\x7F";
 
-    QFileInfo FileInfo;
-    QStandardItemModel *ItemModel;
-    QList<DCFile*> Files;
-    QString UnpackDirectory;
-    QString PackPath;
+    QFileInfo fileInfo_;
+    QStandardItemModel *itemModel_;
+    QList<QSharedPointer<DCFile>> files_;
+    QString unpackDirectory_;
+    QString packPath_;
 
-    QString FileType;
-    quint32 Entries{};
-    quint32 FileSize{};
-    quint32 FileNameSize{};
+    QString fileType_;
+    quint32 entries_{};
+    quint32 fileSize_{};
+    quint32 fileNameSize_{};
 
-    QString ReadString(QDataStream &InStream) const;
-    QList<quint32> ReadBits(QDataStream &InStream) const;
-    void AddVirtualPath(const QString& InVirtualPath, quint32 InNameOffset, quint32 InFileOffset, quint32 InFileSizeFull, quint32 InFileSizeCompressed);
-    void OpenContextMenu();
-    void ExportSingleFile();
+    void openContextMenu();
+    void exportSingleFile();
 
+    void addVirtualPath(const QString& virtualPath, quint32 nameOffset, quint32 fileOffset, quint32 fileSizeFull, quint32 fileSizeCompressed);
+
+    QByteArray decompress(const QByteArray &data, quint32 decompressedSize) const;
+    quint32 toLittleEndian(const QByteArray &byteArray) const;
+    QString readName(QFile &file, const QString &fileType, const QString &fileName) const;
+    QList<quint32> unpackSixBitValues(QFile &file) const;
 };

@@ -7,25 +7,25 @@
 class DCFile : public QStandardItem {
 
 public:
-    explicit DCFile(const QString &InString);
+    explicit DCFile(const QString &filePath);
 
-    void SetNameOffset(quint32 NewNameOffset){NameOffset = NewNameOffset;}
-    void SetFileOffset(quint32 NewFileOffset){FileOffset = NewFileOffset;}
-    void SetFileSizeFull(quint32 NewFileSizeFull){FileSizeFull = NewFileSizeFull;}
-    void SetFileSizeCompressed(const quint32 NewFileSizeCompressed){FileSizeCompressed = NewFileSizeCompressed;}
+    void setNameOffset(const quint32 newNameOffset){nameOffset_ = newNameOffset;}
+    void setFileOffset(const quint32 newFileOffset){fileOffset_ = newFileOffset;}
+    void setFileSizeFull(const quint32 newFileSizeFull){fileSizeFull_ = newFileSizeFull;}
+    void setFileSizeCompressed(const quint32 newFileSizeCompressed){fileSizeCompressed_ = newFileSizeCompressed;}
 
-    [[nodiscard]] quint32 GetNameOffset() const{return NameOffset;}
-    [[nodiscard]] quint32 GetFileOffset() const{return FileOffset;}
-    [[nodiscard]] quint32 GetFileSizeFull() const{return FileSizeFull;}
-    [[nodiscard]] quint32 GetFileSizeCompressed() const{return FileSizeCompressed;}
-    [[nodiscard]] QString GetFileName() const {return FileInfo.fileName();}
-    [[nodiscard]] QString GetFilePath() const {return FileInfo.filePath();}
-    [[nodiscard]] QString GetPath() const {return FileInfo.path();}
+    [[nodiscard]] quint32 nameOffset() const{return nameOffset_;}
+    [[nodiscard]] quint32 fileOffset() const{return fileOffset_;}
+    [[nodiscard]] quint32 fileSizeFull() const{return fileSizeFull_;}
+    [[nodiscard]] quint32 fileSizeCompressed() const{return fileSizeCompressed_;}
+    [[nodiscard]] QString fileName() const {return fileInfo_.fileName();}
+    [[nodiscard]] QString filePath() const {return fileInfo_.filePath();}
+    [[nodiscard]] QString path() const {return fileInfo_.path();}
 
 private:
-    QFileInfo FileInfo;
-    quint32 NameOffset = 0;
-    quint32 FileOffset = 0;
-    quint32 FileSizeFull = 0;
-    quint32 FileSizeCompressed = 0;
+    QFileInfo fileInfo_;
+    quint32 nameOffset_ = 0;
+    quint32 fileOffset_ = 0;
+    quint32 fileSizeFull_ = 0;
+    quint32 fileSizeCompressed_ = 0;
 };
