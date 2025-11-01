@@ -1,7 +1,7 @@
 # Folders
 .idea/
 testing/
-tools/
+misc/
 
 # CMake
 cmake-build-*/
