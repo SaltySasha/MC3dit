@@ -22,14 +22,14 @@ endif()
 add_executable(MC3dit WIN32
         main.cpp
         ui/mainwindow.ui
-        widgets/mainwindow.h
-        widgets/mainwindow.cpp
-        misc/utils.h
-        misc/utils.cpp
-        widgets/datfile.h
-        widgets/datfile.cpp
-        widgets/dcfile.cpp
-        widgets/dcfile.h
+        src/mainwindow.h
+        src/mainwindow.cpp
+        src/utils.h
+        src/utils.cpp
+        src/datfile.h
+        src/datfile.cpp
+        src/dcfile.cpp
+        src/dcfile.h
 
         ${APP_ICON_RESOURCE_WINDOWS}
 )

@@ -1,5 +1,5 @@
 ﻿#include "datfile.h"
-#include "../misc/utils.h"
+#include "utils.h"
 #include <QAbstractFileIconProvider>
 #include <QFileDialog>
 #include <QMessageBox>

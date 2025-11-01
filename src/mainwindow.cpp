@@ -1,7 +1,7 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "../misc/utils.h"
-#include "DATFile.h"
+#include "utils.h"
+#include "datfile.h"
 
 #include <QDragLeaveEvent>
 #include <QMimeData>

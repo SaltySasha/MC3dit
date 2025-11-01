@@ -2,7 +2,7 @@
 #include <QFileDialog>
 #include <QDir>
 
-#include "widgets/mainwindow.h"
+#include "src/mainwindow.h"
 
 int main(int argc, char *argv[]) {
     // This line is needed for CLion to pick up qDebug output

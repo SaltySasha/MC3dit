@@ -6,7 +6,7 @@
 namespace DATFileUtils {
     void runDaveScript(QStringList args, const std::function<void(int, QProcess::ExitStatus)>& onFinishedCallback) {
         QString program = "python";
-        QString daveScript = QDir::currentPath() + "/scripts/dave.py";
+        QString daveScript = QDir::currentPath() + "/external/dave.py";
         args.insert(0, daveScript);
         auto* process = new QProcess();
         process->setProcessChannelMode(QProcess::MergedChannels);
