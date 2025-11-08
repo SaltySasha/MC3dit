@@ -7,37 +7,41 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR}/ui)
 
-set(CMAKE_PREFIX_PATH "C:/Qt/6.9.3/mingw_64/lib/cmake/Qt6")
-
 find_package(Qt6 REQUIRED COMPONENTS
         Core
         Gui
         Widgets
 )
+find_package(Boost REQUIRED COMPONENTS
+        multiprecision)
 
 if (WIN32)
     set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/resources/mc3dit.rc")
 endif()
 
+# Automatically collect source files
+file(GLOB_RECURSE SOURCES
+        "src/*.cpp"
+        "src/*.h"
+)
+
+file(GLOB UI_FILES
+        "ui/*.ui"
+)
+
 add_executable(MC3dit WIN32
         main.cpp
-        ui/mainwindow.ui
-        src/mainwindow.h
-        src/mainwindow.cpp
-        src/utils.h
-        src/utils.cpp
-        src/datfile.h
-        src/datfile.cpp
-        src/dcfile.cpp
-        src/dcfile.h
-
+        ${SOURCES}
+        ${UI_FILES}
         ${APP_ICON_RESOURCE_WINDOWS}
 )
+
 
 target_link_libraries(MC3dit
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        Boost::multiprecision
         winmm
 )
 

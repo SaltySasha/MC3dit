@@ -24,6 +24,7 @@
 #                               default is 0 (1=assumed safe files, 2=all files, unsafe)
 #       -cl | --complevel <int> Compression level;  default is 9 (1=fastest, 9=smallest)
 #         dave.py  B  "/path/to/folder"  "/path/to/new_dave.dat"  -cf  -fc 1
+#         dave.py B -ca -cn -cf -fc 1 ASSETS ASSETS.DAT
 
 # Written by Edness   2022-01-09 - 2023-11-07   v1.5.3
 
@@ -174,6 +175,7 @@ def build_dave(inpath, output, compfiles=False, forcecomp=0, complevel=9, compna
                 else:  # reset counter at new name
                     dedup_idx = 0
 
+            #print(name)
             name_size = len(name) + 1
             for c in name[::-1]:
                 comp_name <<= 6
@@ -183,6 +185,7 @@ def build_dave(inpath, output, compfiles=False, forcecomp=0, complevel=9, compna
                 comp_name |= dedup_info[0] + 0x20 << 6 | dedup_info[1] + 0x38
                 name_size += 2
             name_size = (name_size * 0.75).__ceil__()  # * 6 / 8
+            print(name_size)
             file_names.append(get_int(comp_name, name_size))
 
             # limit is 32 dedupes, probably because the games parse them recursively...
@@ -203,6 +206,7 @@ def build_dave(inpath, output, compfiles=False, forcecomp=0, complevel=9, compna
         file.seek(0x800 - len(dave))
         file.write(dave)
         file_offs = file.seek(0x800 + entry_size + names_size)
+        filenum = 0
         for name, path in file_sets:
             # print("Writing", name)  # path
             if name.endswith("/"):
@@ -212,8 +216,14 @@ def build_dave(inpath, output, compfiles=False, forcecomp=0, complevel=9, compna
             with open(path, "rb") as tmp:
                 data = tmp.read()
             if compfiles and comp_allow():
+                # if filenum == 146:
+                #     with open("D:/MC3dit/testing/debugfilepy_notcompressed.txt", "wb") as debugfile1:
+                #         debugfile1.write(data)
                 zlib_obj = zlib.compressobj(complevel, zlib.DEFLATED, -15)
                 comp_data = zlib_obj.compress(data) + zlib_obj.flush()
+                # if filenum == 146:
+                #     with open("D:/MC3dit/testing/debugfilepy.txt", "wb") as debugfile:
+                #         debugfile.write(comp_data)
                 if len(comp_data) < len(data):
                     data = comp_data
             # pack multiple tiny files into a single sector, if possible
@@ -227,6 +237,7 @@ def build_dave(inpath, output, compfiles=False, forcecomp=0, complevel=9, compna
             entry_info.append((file_offs, os.path.getsize(path), len(data)))
             file.write(data)
             file_offs = seek_align(align) if align else file.tell()
+            filenum += 1
         if align:  # pad last file
             file.seek(-1, 1)
             file.write(b"\x00")

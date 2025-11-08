@@ -33,7 +33,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    QProcess* process_ = new QProcess(this);
 
     void onTabChanged(int index);
     void onTabCloseRequested(int index);
@@ -42,8 +41,6 @@ private:
     void onPackBrowseButtonClicked();
     void onUnpackBrowseButtonClicked();
 
-    QTimer* buttonAnimationTimer = new QTimer(this);
-    void playButtonAnimation(QPushButton* button, const QString& buttonText);
     void resetButton(QPushButton* button, const QString& buttonText);
 
     void testMethod();
