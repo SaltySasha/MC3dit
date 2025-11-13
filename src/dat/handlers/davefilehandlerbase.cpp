@@ -43,6 +43,7 @@ bool DaveFileHandlerBase::readFile() {
     }
 
     file_.close();
+    emit readFinished(true);
     return true;
 }
 
@@ -52,7 +53,7 @@ bool DaveFileHandlerBase::unpackAndExport(const QString &exportDirectory) {
         return false;
     }
 
-    //emit setProgressBarMax(entries_);
+    emit setProgressBarMax(files_.length());
 
     quint32 fileNumber = 1;
     for (const DATFileEntry *file : files_) {
@@ -70,18 +71,19 @@ bool DaveFileHandlerBase::unpackAndExport(const QString &exportDirectory) {
             newFile.close();
         }
 
-        //emit updateProgressBar(fileNumber);
+        emit updateProgressBar(fileNumber);
         fileNumber++;
     }
 
     file_.close();
-    //emit exportFinished();
+    emit exportFinished();
     return true;
 }
 
-bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir &sourceDirectory) {
-    QDir actualSourceDirectory = QDir(sourceDirectory.path() + "/" + baseName());
-    QString exportFilePath = exportDirectory.path() + "/" + baseName() + ".DAT";
+bool DaveFileHandlerBase::packAndExport(const QString &exportDirectoryPath, const QString &sourceDirectoryPath) {
+    QDir sourceDirectory(sourceDirectoryPath);
+    QString exportFilePath = exportDirectoryPath + "/" + baseName() + ".DAT";
+
     QFile exportFile(exportFilePath);
     if (exportFile.exists()) {
         auto reply = QMessageBox::question(nullptr, "Overwrite File",
@@ -91,7 +93,7 @@ bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir 
             return false;
     }
 
-    if (!actualSourceDirectory.exists()) {
+    if (!sourceDirectory.exists()) {
         QMessageBox::critical(nullptr, "Error", "Source folder does not exist");
         return false;
     }
@@ -100,7 +102,7 @@ bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir 
 
     // Collect all files
     QList<FileEntry> fileEntries;
-    QDirIterator iterator(actualSourceDirectory.path(), QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden,
+    QDirIterator iterator(sourceDirectory.path(), QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden,
         QDirIterator::Subdirectories);
     while (iterator.hasNext()) {
         QString filePath = iterator.next();
@@ -110,7 +112,7 @@ bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir 
         if (fileInfo.isDir())
             continue;
 
-        QString relativePath = actualSourceDirectory.relativeFilePath(filePath);
+        QString relativePath = sourceDirectory.relativeFilePath(filePath);
         relativePath.replace("\\", "/"); // Normalize to forward slashes
 
         // Validate filename length
@@ -155,20 +157,17 @@ bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir 
         return false;
     }
 
-    // TODO: emit setProgressBarMax(entriesAmount);
-
     // Start writing file data
     quint32 fileOffset = 0x800 + entreSize + nameBlockSize;
-    QList<FileEntry> finalEntries;
-
+    QList<FileEntry> outEntries;
+    emit setProgressBarMax(fileEntries.size());
     for (int i = 0; i < fileEntries.size(); i++) {
         FileEntry& entry = fileEntries[i];
 
         // Handle directories
         if (entry.relativePath.endsWith("/")) {
             entry.fileOffset = fileOffset;
-            finalEntries.append(entry);
-            // TODO: emit updateProgressBar(i + 1);
+            outEntries.append(entry);
             continue;
         }
 
@@ -205,7 +204,7 @@ bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir 
             }
         }
 
-        quint32 tempFileOffset = handleCompactAlignment(finalEntries, byteAlignment, entryFileData.size());
+        quint32 tempFileOffset = handleCompactAlignment(outEntries, byteAlignment, entryFileData.size());
         if (tempFileOffset > -1)
             fileOffset = tempFileOffset;
 
@@ -215,8 +214,8 @@ bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir 
 
         fileOffset = calculateAlign(exportFile.pos(), byteAlignment);
 
-        finalEntries.append(entry);
-        // TODO: emit updateProgressBar(i + 1);
+        outEntries.append(entry);
+        emit updateProgressBar(i + 1);
     }
 
     // Pad last file
@@ -240,8 +239,8 @@ bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir 
 
     // Write entry table
     exportFile.seek(0x800);
-    for (int i = 0; i < finalEntries.size(); i++) {
-        const FileEntry& entry = finalEntries[i];
+    for (int i = 0; i < outEntries.size(); i++) {
+        const FileEntry& entry = outEntries[i];
         exportFile.write(getIntAsBytes(nameOffsets[i], 4));
         exportFile.write(getIntAsBytes(entry.fileOffset, 4));
         exportFile.write(getIntAsBytes(entry.sizeFull, 4));
@@ -258,10 +257,11 @@ bool DaveFileHandlerBase::packAndExport(const QDir &exportDirectory, const QDir 
 
     QMessageBox::information(nullptr, "Success",
         QString("Archive built successfully at:\n%1\n\nFrom source folder:\n%2")
-        .arg(exportFilePath, actualSourceDirectory.path()));
+        .arg(exportFilePath, sourceDirectory.path()));
 
-    // TODO: emit exportFinished();
-
+    emit exportFinished();
+    emit packingFinished();
+    initItemModel(true);
     return true;
 }
 

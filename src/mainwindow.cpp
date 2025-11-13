@@ -15,11 +15,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->progressBar->hide();
     ui->packSection->hide();
     ui->unpackSection->hide();
+    setButtonsEnabled(false);
 
     connect(ui->unpackButton, &QPushButton::clicked, this, &MainWindow::onUnpackButtonClicked);
     connect(ui->packButton, &QPushButton::clicked, this, &MainWindow::onPackButtonClicked);
-    connect(ui->browsePackButton, &QPushButton::clicked, this, &MainWindow::onPackBrowseButtonClicked);
     connect(ui->browseUnpackButton, &QPushButton::clicked, this, &MainWindow::onUnpackBrowseButtonClicked);
+    connect(ui->browsePackButton, &QPushButton::clicked, this, &MainWindow::onPackBrowseButtonClicked);
 
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
     connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::onTabCloseRequested);
@@ -94,10 +95,10 @@ void MainWindow::dropEvent(QDropEvent *event) {
         if (!newDatFile)
             continue;
 
-
         connect(newDatFile->fileHandler(), &IDATFileHandler::setProgressBarMax, this, [this](qint32 newMax) {
             ui->progressBar->show();
             ui->progressBar->setMaximum(newMax);
+            lockUi(true);
         });
         connect(newDatFile->fileHandler(), &IDATFileHandler::updateProgressBar, this, [this](qint32 newProgressAmount) {
             ui->progressBar->setValue(newProgressAmount);
@@ -105,23 +106,36 @@ void MainWindow::dropEvent(QDropEvent *event) {
                 ui->progressBar->hide();
         });
         connect(newDatFile->fileHandler(), &IDATFileHandler::exportFinished, this, [this]() {
-            resetButton(ui->unpackButton, "Unpack");
+            refreshButtons();
+            lockUi(false);
+        });
+        connect(newDatFile->fileHandler(), &IDATFileHandler::readFinished, this, [this]() {
+            lockUi(false);
         });
 
+        if (!newDatFile->fileHandler()->readFile()) {
+            newDatFile->deleteLater();
+            continue;
+        }
+
+        ui->unpackSection->show();
+        ui->packSection->show();
         ui->tabWidget->addTab(newDatFile, newDatFile->fileHandler()->baseName());
         ui->tabWidget->setCurrentWidget(newDatFile);
         ui->tabWidget->tabBar()->setTabToolTip(ui->tabWidget->currentIndex(), newDatFile->fileHandler()->fileInfo().filePath());
+        setUnpackDirectory(newDatFile->fileHandler()->fileInfo().path());
+        setPackDirectory(newDatFile->fileHandler()->fileInfo().path() + "/" + newDatFile->fileHandler()->baseName());
     }
 }
 
-void MainWindow::setButtonLock(const bool locked) const {
-    ui->packButton->setEnabled(locked);
-    ui->unpackButton->setEnabled(locked);
+void MainWindow::setButtonsEnabled(const bool enabled) const {
+    ui->packButton->setEnabled(enabled);
+    ui->unpackButton->setEnabled(enabled);
 }
 
 void MainWindow::onTabChanged(int index) {
-    auto *widget = dynamic_cast<DATFile*>(ui->tabWidget->widget(index));
-    if (!widget) {
+    auto *datFile = dynamic_cast<DATFile*>(ui->tabWidget->widget(index));
+    if (!datFile) {
         ui->unpackLineEdit->clear();
         ui->packLineEdit->clear();
         ui->packSection->hide();
@@ -129,17 +143,10 @@ void MainWindow::onTabChanged(int index) {
         return;
     }
 
-    ui->unpackSection->show();
-    ui->packSection->show();
-
-    // TODO
-    // ui->unpackLineEdit->setText(widget->unpackDirectory().isEmpty()
-                                // ? widget->fileDirectory()
-                                // : widget->unpackDirectory());
-
-    // ui->packLineEdit->setText(  widget->packPath().isEmpty()
-                                // ? widget->filePath()
-                                // : widget->packPath());
+    QString unpackDirectory = datFile->unpackDirectory().isEmpty() ? datFile->fileHandler()->fileInfo().path() : datFile->unpackDirectory();
+    QString packDirectory = datFile->packDirectory().isEmpty() ? datFile->fileHandler()->fileInfo().path() + "/" + datFile->fileHandler()->baseName() : datFile->packDirectory();
+    setUnpackDirectory(unpackDirectory);
+    setPackDirectory(packDirectory);
 }
 
 void MainWindow::onTabCloseRequested(int index) {
@@ -151,8 +158,9 @@ void MainWindow::onTabCloseRequested(int index) {
 }
 
 void MainWindow::onUnpackButtonClicked() {
+    refreshButtons();
     auto *widget = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
-    if (!widget)
+    if (!widget && !QDir(ui->unpackLineEdit->text()).exists())
         return;
 
     if (!widget->fileHandler()->fileInfo().isFile()) {
@@ -160,13 +168,15 @@ void MainWindow::onUnpackButtonClicked() {
         return;
     }
 
-    //ui->tabWidget->tabBar()->tabButton(ui->tabWidget->currentIndex(), QTabBar::RightSide)->hide();
+    ui->tabWidget->tabBar()->tabButton(ui->tabWidget->currentIndex(), QTabBar::RightSide)->hide();
     widget->fileHandler()->unpackAndExport(ui->unpackLineEdit->text());
 }
 
 void MainWindow::onPackButtonClicked() {
-    auto *widget = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
-    widget->fileHandler()->packAndExport(QDir("D:/MC3dit/testing/packed"), QDir("D:/MC3dit/testing"));
+    refreshButtons();
+    auto *datFile = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
+    if (datFile && QDir(ui->packLineEdit->text()).exists())
+        datFile->fileHandler()->packAndExport(datFile->fileHandler()->fileInfo().path(), ui->packLineEdit->text());
 }
 
 void MainWindow::onPackBrowseButtonClicked() {
@@ -174,7 +184,11 @@ void MainWindow::onPackBrowseButtonClicked() {
     if (filePath.isEmpty())
         return;
 
-    //TODO: Logic
+    auto *datFile = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
+    if (datFile)
+        datFile->setPackDirectory(filePath);
+    ui->packLineEdit->setText(filePath);
+    refreshButtons();
 }
 
 void MainWindow::onUnpackBrowseButtonClicked() {
@@ -182,12 +196,44 @@ void MainWindow::onUnpackBrowseButtonClicked() {
     if (folderPath.isEmpty())
         return;
 
-    //TODO: Logic
+    auto *datFile = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
+    if (datFile)
+        datFile->setUnpackDirectory(folderPath);
+    ui->unpackLineEdit->setText(folderPath);
+    refreshButtons();
 }
 
-void MainWindow::resetButton(QPushButton* button, const QString &buttonText) {
-    setButtonLock(true);
-    button->setText(buttonText);
+void MainWindow::refreshButtons() {
+    QDir dir;
+    if (!ui->unpackLineEdit->text().isEmpty()) {
+        dir.setPath(ui->unpackLineEdit->text());
+        ui->unpackButton->setEnabled(dir.exists());
+    }
+
+    if (!ui->packLineEdit->text().isEmpty()) {
+        dir.setPath(ui->packLineEdit->text());
+        ui->packButton->setEnabled(dir.exists());
+    }
+}
+
+void MainWindow::lockUi(bool locked) {
+    ui->browsePackButton->setDisabled(locked);
+    ui->browseUnpackButton->setDisabled(locked);
+    setButtonsEnabled(!locked);
+
+    QWidget* tab = ui->tabWidget->tabBar()->tabButton(ui->tabWidget->currentIndex(), QTabBar::RightSide);
+    if (tab)
+        locked ? tab->hide() : tab->show();
+}
+
+void MainWindow::setUnpackDirectory(const QString &directory) {
+    ui->unpackLineEdit->setText(directory);
+    refreshButtons();
+}
+
+void MainWindow::setPackDirectory(const QString &directory) {
+    ui->packLineEdit->setText(directory);
+    refreshButtons();
 }
 
 void MainWindow::testMethod() {

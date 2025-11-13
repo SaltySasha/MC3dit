@@ -29,7 +29,7 @@ public:
     void dragMoveEvent(QDragMoveEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 
-    void setButtonLock(bool locked) const;
+    void setButtonsEnabled(bool enabled) const;
 
 private:
     Ui::MainWindow *ui;
@@ -41,7 +41,10 @@ private:
     void onPackBrowseButtonClicked();
     void onUnpackBrowseButtonClicked();
 
-    void resetButton(QPushButton* button, const QString& buttonText);
+    void refreshButtons();
+    void lockUi(bool locked);
+    void setUnpackDirectory(const QString &directory);
+    void setPackDirectory(const QString &directory);
 
     void testMethod();
 };

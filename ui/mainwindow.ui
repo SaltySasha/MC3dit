@@ -117,6 +117,20 @@
       </property>
       <layout class="QHBoxLayout" name="UnpackSectionLayout">
        <item>
+        <widget class="QLabel" name="labelUnpackDir">
+         <property name="font">
+          <font>
+           <family>Courier New</family>
+           <pointsize>10</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Unpack Directory:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLineEdit" name="unpackLineEdit">
          <property name="enabled">
           <bool>false</bool>
@@ -185,6 +199,20 @@
     <item>
      <widget class="QWidget" name="packSection" native="true">
       <layout class="QHBoxLayout" name="PackSectionLayout">
+       <item>
+        <widget class="QLabel" name="labelPackDir">
+         <property name="font">
+          <font>
+           <family>Courier New</family>
+           <pointsize>10</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Directory To Pack:</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QLineEdit" name="packLineEdit">
          <property name="enabled">

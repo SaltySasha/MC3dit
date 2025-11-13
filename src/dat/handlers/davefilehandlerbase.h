@@ -10,7 +10,7 @@ public:
 
     bool readFile() override;
     bool unpackAndExport(const QString &exportDirectory) override;
-    bool packAndExport(const QDir &exportDirectory, const QDir &sourceDirectory) override;
+    bool packAndExport(const QString &exportDirectoryPath, const QString &sourceDirectoryPath) override;
 
 protected:
     virtual bool validateChars(const QString &filePath) const = 0;

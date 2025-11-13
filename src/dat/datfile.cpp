@@ -9,24 +9,27 @@
 
 DATFile * DATFile::create(const QString &filePath) {
     auto* datFile = new DATFile(filePath);
-    if (!datFile->fileHandler_ || !datFile->fileHandler_->readFile()) {
+    if (!datFile->fileHandler_) {
         datFile->deleteLater();
         return nullptr;
     }
 
-    datFile->setModel(datFile->fileHandler_->itemModel());
-    datFile->model()->sort(0, Qt::AscendingOrder);
-    datFile->setContextMenuPolicy(Qt::CustomContextMenu);
-    datFile->connect(datFile, &QTreeView::customContextMenuRequested, datFile, &DATFile::openContextMenu);
+    // datFile->setContextMenuPolicy(Qt::CustomContextMenu);
+    // connect(datFile, &QTreeView::customContextMenuRequested, datFile, &DATFile::openContextMenu);
     return datFile;
 }
 
 DATFile::~DATFile() {
-    fileHandler_->deleteLater();
+    if (fileHandler_)
+        fileHandler_->deleteLater();
 }
 
 DATFile::DATFile(const QString &filePath) {
     fileHandler_ = DATFileFactory::createHandler(filePath);
+    connect(fileHandler_, &IDATFileHandler::readFinished, [&] {
+        setModel(fileHandler_->itemModel());
+        model()->sort(0, Qt::AscendingOrder);
+    });
 }
 
 void DATFile::openContextMenu() {
@@ -41,6 +44,7 @@ void DATFile::openContextMenu() {
     newMenu->deleteLater();
 }
 
+// TODO: Export through file handler
 void DATFile::exportSingleFile() {
     QFile datFile("");
     if (!datFile.exists()) {

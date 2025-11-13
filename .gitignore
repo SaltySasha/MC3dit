@@ -2,6 +2,7 @@
 .idea/
 misc/
 testing/
+release/
 
 # CMake
 cmake-build-*/
