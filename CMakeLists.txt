@@ -11,6 +11,7 @@ find_package(Qt6 REQUIRED COMPONENTS
         Core
         Gui
         Widgets
+        Network
 )
 find_package(Boost REQUIRED COMPONENTS
         multiprecision)
@@ -41,6 +42,7 @@ target_link_libraries(MC3dit
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        Qt::Network
         Boost::multiprecision
         winmm
 )
@@ -60,7 +62,7 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
                 "${QT_INSTALL_PATH}/plugins/platforms/qwindows${DEBUG_SUFFIX}.dll"
                 "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms/")
     endif ()
-    foreach (QT_LIB Core Gui Widgets)
+    foreach (QT_LIB Core Gui Widgets Network)
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy
                 "${QT_INSTALL_PATH}/bin/Qt6${QT_LIB}${DEBUG_SUFFIX}.dll"

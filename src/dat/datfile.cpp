@@ -26,6 +26,9 @@ DATFile::~DATFile() {
 
 DATFile::DATFile(const QString &filePath) {
     fileHandler_ = DATFileFactory::createHandler(filePath);
+    if (!fileHandler_)
+        return;
+
     connect(fileHandler_, &IDATFileHandler::readFinished, [&] {
         setModel(fileHandler_->itemModel());
         model()->sort(0, Qt::AscendingOrder);

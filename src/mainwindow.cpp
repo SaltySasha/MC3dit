@@ -70,61 +70,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
             continue;
         }
 
-        QString file = url.toLocalFile();
-
-        // Only open DAT files for now
-        if (!file.endsWith(".dat", Qt::CaseInsensitive)) {
-            // QMessageBox::warning(this, "Invalid File", QString("%1 is not a DAT file!").arg(QFileInfo(file).fileName()));
-            continue;
-        }
-
-        bool isFileOpened = false;
-        // Switch to file tab if file is already opened
-        for (qint32 tabIndex = 0; tabIndex < ui->tabWidget->count(); tabIndex++) {
-            auto* tab = dynamic_cast<DATFile*>(ui->tabWidget->widget(tabIndex));
-            if (tab->fileHandler()->fileInfo().filePath() == file) {
-                ui->tabWidget->setCurrentWidget(tab);
-                isFileOpened =  true;
-                break;
-            }
-        }
-        if (isFileOpened)
-            continue;
-
-        auto *newDatFile = DATFile::create(url.toLocalFile());
-        if (!newDatFile)
-            continue;
-
-        connect(newDatFile->fileHandler(), &IDATFileHandler::setProgressBarMax, this, [this](qint32 newMax) {
-            ui->progressBar->show();
-            ui->progressBar->setMaximum(newMax);
-            lockUi(true);
-        });
-        connect(newDatFile->fileHandler(), &IDATFileHandler::updateProgressBar, this, [this](qint32 newProgressAmount) {
-            ui->progressBar->setValue(newProgressAmount);
-            if (newProgressAmount >= ui->progressBar->maximum())
-                ui->progressBar->hide();
-        });
-        connect(newDatFile->fileHandler(), &IDATFileHandler::exportFinished, this, [this]() {
-            refreshButtons();
-            lockUi(false);
-        });
-        connect(newDatFile->fileHandler(), &IDATFileHandler::readFinished, this, [this]() {
-            lockUi(false);
-        });
-
-        if (!newDatFile->fileHandler()->readFile()) {
-            newDatFile->deleteLater();
-            continue;
-        }
-
-        ui->unpackSection->show();
-        ui->packSection->show();
-        ui->tabWidget->addTab(newDatFile, newDatFile->fileHandler()->baseName());
-        ui->tabWidget->setCurrentWidget(newDatFile);
-        ui->tabWidget->tabBar()->setTabToolTip(ui->tabWidget->currentIndex(), newDatFile->fileHandler()->fileInfo().filePath());
-        setUnpackDirectory(newDatFile->fileHandler()->fileInfo().path());
-        setPackDirectory(newDatFile->fileHandler()->fileInfo().path() + "/" + newDatFile->fileHandler()->baseName());
+        tryOpenFile(url.toLocalFile());
     }
 }
 
@@ -201,6 +147,60 @@ void MainWindow::onUnpackBrowseButtonClicked() {
         datFile->setUnpackDirectory(folderPath);
     ui->unpackLineEdit->setText(folderPath);
     refreshButtons();
+}
+
+void MainWindow::tryOpenFile(const QString &filePath) {
+    // Only open DAT files for now
+    if (!filePath.endsWith(".dat", Qt::CaseInsensitive)) {
+        // QMessageBox::warning(this, "Invalid File", QString("%1 is not a DAT file!").arg(QFileInfo(file).fileName()));
+        return;
+    }
+    QString cleanFilePath = filePath;
+    cleanFilePath.replace('\\', '/');
+
+    // Switch to file tab if file is already opened
+    for (qint32 tabIndex = 0; tabIndex < ui->tabWidget->count(); tabIndex++) {
+        auto* tab = dynamic_cast<DATFile*>(ui->tabWidget->widget(tabIndex));
+        if (tab->fileHandler()->fileInfo().filePath() == cleanFilePath) {
+            ui->tabWidget->setCurrentWidget(tab);
+            return;
+        }
+    }
+
+    auto *newDatFile = DATFile::create(cleanFilePath);
+    if (!newDatFile)
+        return;
+
+    connect(newDatFile->fileHandler(), &IDATFileHandler::setProgressBarMax, this, [this](qint32 newMax) {
+        ui->progressBar->show();
+        ui->progressBar->setMaximum(newMax);
+        lockUi(true);
+    });
+    connect(newDatFile->fileHandler(), &IDATFileHandler::updateProgressBar, this, [this](qint32 newProgressAmount) {
+        ui->progressBar->setValue(newProgressAmount);
+        if (newProgressAmount >= ui->progressBar->maximum())
+            ui->progressBar->hide();
+    });
+    connect(newDatFile->fileHandler(), &IDATFileHandler::exportFinished, this, [this]() {
+        refreshButtons();
+        lockUi(false);
+    });
+    connect(newDatFile->fileHandler(), &IDATFileHandler::readFinished, this, [this]() {
+        lockUi(false);
+    });
+
+    if (!newDatFile->fileHandler()->readFile()) {
+        newDatFile->deleteLater();
+        return;
+    }
+
+    ui->unpackSection->show();
+    ui->packSection->show();
+    ui->tabWidget->addTab(newDatFile, newDatFile->fileHandler()->baseName());
+    ui->tabWidget->setCurrentWidget(newDatFile);
+    ui->tabWidget->tabBar()->setTabToolTip(ui->tabWidget->currentIndex(), newDatFile->fileHandler()->fileInfo().filePath());
+    setUnpackDirectory(newDatFile->fileHandler()->fileInfo().path());
+    setPackDirectory(newDatFile->fileHandler()->fileInfo().path() + "/" + newDatFile->fileHandler()->baseName());
 }
 
 void MainWindow::refreshButtons() {

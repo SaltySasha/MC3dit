@@ -29,6 +29,7 @@ public:
     void dragMoveEvent(QDragMoveEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 
+    void tryOpenFile(const QString &filePath);
     void setButtonsEnabled(bool enabled) const;
 
 private:

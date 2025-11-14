@@ -3,6 +3,7 @@
 misc/
 testing/
 release/
+external/
 
 # CMake
 cmake-build-*/
