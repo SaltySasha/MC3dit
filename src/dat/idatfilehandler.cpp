@@ -1,6 +1,5 @@
 ﻿#include "idatfilehandler.h"
 
-#include <QAbstractFileIconProvider>
 #include <QMessageBox>
 
 #include "datefileentry.h"
@@ -18,11 +17,13 @@ void IDATFileHandler::initItemModel(bool startRead) {
         messageFileNotFound(file_.fileName(), file_.errorString());
         return;
     }
+
     if (itemModel_) {
         itemModel_->deleteLater();
         pathCache_.clear();
         files_.clear();;
     }
+
     fileMagicBytes_ = file_.read(4);
     entryCount_ = toLittleEndian( file_.read(4));
     itemModel_ = new QStandardItemModel(this);

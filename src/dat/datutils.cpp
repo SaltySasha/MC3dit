@@ -5,6 +5,7 @@
 
 #include "handlers/davelowerfilehandler.h"
 #include "handlers/daveupperfilehandler.h"
+#include "handlers/hashfilehandler.h"
 
 namespace DATUtils {
     quint32 toLittleEndian(const QByteArray &byteArray) {
@@ -67,9 +68,9 @@ namespace DATFileFactory {
 
         if (fileSignature == "DAVE")
             return new DaveUpperFileHandler(filePath);
-        // TODO
-        // if (fileSignature == "Hash")
-        //     return std::make_unique<HashFileHandler>(filePath);
+
+        if (fileSignature == "Hash")
+            return new HashFileHandler(filePath);
 
         return nullptr;
     }

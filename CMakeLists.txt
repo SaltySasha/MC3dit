@@ -12,6 +12,7 @@ find_package(Qt6 REQUIRED COMPONENTS
         Gui
         Widgets
         Network
+        Multimedia
 )
 find_package(Boost REQUIRED COMPONENTS
         multiprecision)
@@ -32,6 +33,7 @@ file(GLOB UI_FILES
 
 add_executable(MC3dit WIN32
         main.cpp
+        resources/mc3dit.qrc
         ${SOURCES}
         ${UI_FILES}
         ${APP_ICON_RESOURCE_WINDOWS}
@@ -43,6 +45,7 @@ target_link_libraries(MC3dit
         Qt::Gui
         Qt::Widgets
         Qt::Network
+        Qt::Multimedia
         Boost::multiprecision
         winmm
 )
@@ -62,7 +65,7 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
                 "${QT_INSTALL_PATH}/plugins/platforms/qwindows${DEBUG_SUFFIX}.dll"
                 "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms/")
     endif ()
-    foreach (QT_LIB Core Gui Widgets Network)
+    foreach (QT_LIB Core Gui Widgets Network Multimedia)
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy
                 "${QT_INSTALL_PATH}/bin/Qt6${QT_LIB}${DEBUG_SUFFIX}.dll"

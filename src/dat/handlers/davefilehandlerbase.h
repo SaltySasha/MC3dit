@@ -13,16 +13,14 @@ public:
     bool packAndExport(const QString &exportDirectoryPath, const QString &sourceDirectoryPath) override;
 
 protected:
-    virtual bool validateChars(const QString &filePath) const = 0;
-    virtual bool sortFiles( QList<FileEntry> &fileList) const = 0;
-    virtual bool prepareFileBlock(const QList<FileEntry> &fileEntries, QList<QByteArray> &fileBytesList) const = 0;
+    virtual QString readEntryPath(const QString &previousFileName = QString()) = 0;
     virtual bool shouldCompressFile(const QString &filePath, const QByteArray &fileData) const = 0;
     virtual QList<quint32> calculateNameOffsets(QList<QByteArray> &namesList) = 0;
     virtual quint32 handleCompactAlignment(const QList<FileEntry> &entryList, quint32 byteAlignment,
                                             quint32 entryFileSize) const {return -1;}
 
-    [[nodiscard]] QByteArray decompressFile(const QByteArray &fileFata, quint32 decompressedSize) const override;
-    [[nodiscard]] QByteArray compressFile(const QByteArray &fileFata) const override;
+    [[nodiscard]] QByteArray decompressFile(const QByteArray &fileFata, quint32 decompressedSize) const;
+    [[nodiscard]] QByteArray compressFile(const QByteArray &fileFata) const;
 
     quint32 calculateAlign(quint32 size, quint32 align) const;
     quint32 entriesBlockSize_ = 0;

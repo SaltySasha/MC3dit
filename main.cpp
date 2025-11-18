@@ -3,6 +3,7 @@
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QDir>
+// #include <QtMultimedia/QAudioSink>
 
 #include "src/mainwindow.h"
 
@@ -32,14 +33,29 @@ int main(int argc, char *argv[]) {
 
     QApplication app(argc, argv);
 
+
+    // QAudioFormat fmt;
+    // fmt.setSampleRate(32000);
+    // fmt.setChannelCount(2);
+    // fmt.setSampleFormat(QAudioFormat::Int16);
+    //
+    // QFile file("URL");
+    // file.open(QIODevice::ReadOnly);
+    //
+    // QAudioSink* sink = new QAudioSink(fmt);
+    // sink->start(&file);
+    //
+    // sink->stop();
+    // file.close();
+    // delete sink;
+
     QStringList args = app.arguments();
     if (sendMessageToRunningInstance(args))
         return 0;
 
-    //app.setWindowIcon(QIcon("icon.png"));
     MainWindow mainWindow;
     mainWindow.show();
-    mainWindow.setWindowIcon(QIcon("icon.png"));
+    mainWindow.setWindowIcon(QIcon(":/icon.png"));
 
     // Otherwise, start listening for future launches
     QLocalServer server;

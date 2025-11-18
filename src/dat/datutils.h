@@ -15,6 +15,7 @@ struct FileEntry {
 
     QFileInfo fileInfo;
     QString relativePath;
+    quint32 hash;
     quint32 nameOffset = 0;
     quint32 fileOffset = 0;
     quint32 sizeFull = 0;
@@ -31,5 +32,5 @@ namespace DATUtils {
 // Factory to create the appropriate handler
 namespace DATFileFactory {
     IDATFileHandler* createHandler(const QString &filePath);
-    inline const QStringList allowedSignatureList_ = {"Dave", "DAVE"}; //TODO:, "Hash"};
+    inline const QStringList allowedSignatureList_ = {"Dave", "DAVE", "Hash"};
 };

@@ -1,6 +1,5 @@
 ﻿#include "davefilehandlerbase.h"
 
-#include <QDir>
 #include <QDirIterator>
 #include <QMessageBox>
 #include <QtZlib/zlib.h>
@@ -108,7 +107,6 @@ bool DaveFileHandlerBase::packAndExport(const QString &exportDirectoryPath, cons
         QString filePath = iterator.next();
         QFileInfo fileInfo(filePath);
 
-        // Skip directories if not including them
         if (fileInfo.isDir())
             continue;
 

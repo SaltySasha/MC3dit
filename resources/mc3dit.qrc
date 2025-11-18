@@ -1,0 +1,7 @@
+﻿<RCC>
+    <qresource prefix="/">
+        <file>icon.png</file>
+        <file>mc3dit.ico</file>
+        <file>../external/MC3_PS2_Streams.lst</file>
+    </qresource>
+</RCC>

@@ -30,10 +30,10 @@ signals:
 
 protected:
     virtual void initItemModel(bool startRead = false);
-    virtual QString readEntryPath(const QString &previousFileName = QString()) = 0;
     virtual void addVirtualPath(const FileEntry &fileEntry);
-    [[nodiscard]] virtual QByteArray decompressFile(const QByteArray &fileData, quint32 decompressedSize) const = 0;
-    [[nodiscard]] virtual QByteArray compressFile(const QByteArray &fileFata) const = 0;
+    virtual bool validateChars(const QString &filePath) const = 0;
+    virtual bool sortFiles( QList<FileEntry> &fileList) const = 0;
+    virtual bool prepareFileBlock(const QList<FileEntry> &fileEntries, QList<QByteArray> &fileBytesList) const = 0;
 
     const QString signature_ = "SaltyWasHere:)";
     QFile file_;
