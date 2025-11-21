@@ -102,6 +102,7 @@ bool HashFileHandler::unpackAndExport(const QString &exportDirectory) {
     return true;
 }
 
+// TODO: Needs cleaning up and speed improvements
 bool HashFileHandler::packAndExport(const QString &exportDirectoryPath, const QString &sourceDirectoryPath) {
     QDir sourceDirectory(sourceDirectoryPath);
     QString exportFilePath = exportDirectoryPath + "/" + baseName() + ".DAT";
@@ -155,17 +156,10 @@ bool HashFileHandler::packAndExport(const QString &exportDirectoryPath, const QS
         fileEntries.append(newEntry);
     }
 
-    for (auto &entry : fileEntries)
-        qDebug() << entry.relativePath;
-    sortFiles(fileEntries);
-
-    QList<QByteArray> fileNames;
-    prepareFileBlock(fileEntries, fileNames);
-
-    QByteArray allNameBytes;
-    for (const QByteArray& name : fileNames)
-        allNameBytes.append(name);
-    const quint32 nameBlockSize = 8 + fileEntries.size() * 16 + allNameBytes.size() + signature_.length() + 2;
+    QList<FileEntry> sortedEntries = fileEntries;
+    std::ranges::sort(sortedEntries, [](const FileEntry& a, const FileEntry& b) {
+        return a.hash < b.hash;
+    });
 
     // Create output directory if needed
     QFileInfo exportFileInfo(exportFile);
@@ -181,34 +175,24 @@ bool HashFileHandler::packAndExport(const QString &exportDirectoryPath, const QS
     exportFile.write(fileMagicBytes_.toUtf8());
     exportFile.write(getIntAsBytes(fileEntries.size(), 4));
 
-    quint32 fileOffset = (nameBlockSize + 6144 - 1) / 6144 * 6144;
-    quint32 customNameOffset = fileEntries.size() * 12 + 8;
-    exportFile.seek(customNameOffset);
-    exportFile.write(signature_.toUtf8());
-    customNameOffset += signature_.length() + 2;
+    for (auto &entry : sortedEntries) {
+        exportFile.write(getIntAsBytes(entry.hash, 4));
+        exportFile.write(getIntAsBytes(entry.fileOffset, 4));
+        exportFile.write(getIntAsBytes(entry.sizeFull, 4));
+    }
+
+    exportFile.write(signature_.toUtf8() + '\0' + '\0');
+
+    for (auto &entry : sortedEntries) {
+        exportFile.write(entry.relativePath.toUtf8() + '\0');
+        exportFile.write(getIntAsBytes(entry.hash, 4));
+    }
+
+    quint32 fileOffset = (exportFile.pos() + byteAlignment - 1) / byteAlignment * byteAlignment;
+
     emit setProgressBarMax(fileEntries.size());
     for (quint32 i = 0; i < fileEntries.size(); i++) {
         FileEntry &entry = fileEntries[i];
-        exportFile.seek(i * 12 + 8);
-        exportFile.write(getIntAsBytes(entry.hash, 4));
-        exportFile.write(getIntAsBytes(fileOffset, 4));
-        exportFile.write(getIntAsBytes(entry.sizeFull, 4));
-
-        exportFile.seek(customNameOffset);
-        exportFile.write(fileNames[i]);
-        exportFile.write(getIntAsBytes(entry.hash, 4));
-        customNameOffset = exportFile.pos();
-
-
-        // Check file offset overflow
-        if (fileOffset > 0xFFFFFFFF) {
-            QMessageBox::critical(nullptr, "Archive Too Big",
-                "Archive size exceeds maximum (4GB).");
-            exportFile.close();
-            QFile::remove(exportFilePath);
-            return false;
-        }
-
         // Read file data
         QFile entryFile(entry.filePath());
         if (!entryFile.open(QIODevice::ReadOnly)) {
@@ -221,13 +205,99 @@ bool HashFileHandler::packAndExport(const QString &exportDirectoryPath, const QS
         QByteArray entryFileData = entryFile.readAll();
         entryFile.close();
 
-        exportFile.seek((fileOffset + 6144 - 1) / 6144 * 6144);
+        exportFile.seek(fileOffset);
         exportFile.write(entryFileData);
+        quint32 index = 0;
+        for (quint32 i = 0; i < sortedEntries.size(); i++) {
+            if (sortedEntries[i].hash == entry.hash) {
+                index = i;
+                break;
+            }
+        }
+
+        exportFile.seek(12 + 12 * index);
+        exportFile.write(getIntAsBytes(fileOffset, 4));
         fileOffset += entry.sizeFull;
+        fileOffset = (fileOffset + byteAlignment - 1) / byteAlignment * byteAlignment;
         emit updateProgressBar(i + 1);
     }
 
+    // for (auto &entry : fileEntries)
+    //     qDebug() << entry.relativePath;
+    // sortFiles(fileEntries);
+    //
+    // QList<QByteArray> fileNames;
+    // prepareFileBlock(fileEntries, fileNames);
+    //
+    // QByteArray allNameBytes;
+    // for (const QByteArray& name : fileNames)
+    //     allNameBytes.append(name);
+    // const quint32 nameBlockSize = 8 + fileEntries.size() * 16 + allNameBytes.size() + signature_.length() + 2;
+    //
+    // // Create output directory if needed
+    // QFileInfo exportFileInfo(exportFile);
+    // QDir().mkpath(exportFileInfo.absolutePath());
+    //
+    // // Open output file
+    // if (!exportFile.open(QIODevice::WriteOnly)) {
+    //     QMessageBox::critical(nullptr, "Error",
+    //                             QString("Could not create output file: %1").arg(exportFile.errorString()));
+    //     return false;
+    // }
+    //
+    // exportFile.write(fileMagicBytes_.toUtf8());
+    // exportFile.write(getIntAsBytes(fileEntries.size(), 4));
+    //
+    // quint32 fileOffset = (nameBlockSize + 6144 - 1) / 6144 * 6144;
+    // quint32 customNameOffset = fileEntries.size() * 12 + 8;
+    // exportFile.seek(customNameOffset);
+    // exportFile.write(signature_.toUtf8());
+    // customNameOffset += signature_.length() + 2;
+    // emit setProgressBarMax(fileEntries.size());
+    // for (quint32 i = 0; i < fileEntries.size(); i++) {
+    //     FileEntry &entry = fileEntries[i];
+    //     exportFile.seek(i * 12 + 8);
+    //     exportFile.write(getIntAsBytes(entry.hash, 4));
+    //     exportFile.write(getIntAsBytes(fileOffset, 4));
+    //     exportFile.write(getIntAsBytes(entry.sizeFull, 4));
+    //
+    //     exportFile.seek(customNameOffset);
+    //     exportFile.write(fileNames[i]);
+    //     exportFile.write(getIntAsBytes(entry.hash, 4));
+    //     customNameOffset = exportFile.pos();
+    //
+    //
+    //     // Check file offset overflow
+    //     if (fileOffset > 0xFFFFFFFF) {
+    //         QMessageBox::critical(nullptr, "Archive Too Big",
+    //             "Archive size exceeds maximum (4GB).");
+    //         exportFile.close();
+    //         QFile::remove(exportFilePath);
+    //         return false;
+    //     }
+    //
+    //     // Read file data
+    //     QFile entryFile(entry.filePath());
+    //     if (!entryFile.open(QIODevice::ReadOnly)) {
+    //         QMessageBox::critical(nullptr, "Unable To Open File",
+    //             QString("Could not open %1 with reason:\n%2").arg(entryFile.fileName(), entryFile.errorString()));
+    //         QFile::remove(exportFilePath);
+    //         return false;
+    //     }
+    //
+    //     QByteArray entryFileData = entryFile.readAll();
+    //     entryFile.close();
+    //
+    //     exportFile.seek((fileOffset + 6144 - 1) / 6144 * 6144);
+    //     exportFile.write(entryFileData);
+    //     fileOffset += entry.sizeFull;
+    //     emit updateProgressBar(i + 1);
+    // }
+
     exportFile.close();
+    emit exportFinished();
+    emit packingFinished();
+    initItemModel(true);
     return true;
 }
 
