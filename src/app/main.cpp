@@ -5,7 +5,8 @@
 #include <QDir>
 // #include <QtMultimedia/QAudioSink>
 
-#include "src/mainwindow.h"
+#include "../filebrowser/ui/filebrowser.h"
+#include "ui/mainwindow.h"
 
 constexpr auto APP_SERVER_NAME = "MC3ditServer";
 
@@ -33,32 +34,26 @@ int main(int argc, char *argv[]) {
 
     QApplication app(argc, argv);
 
-
-    // QAudioFormat fmt;
-    // fmt.setSampleRate(32000);
-    // fmt.setChannelCount(2);
-    // fmt.setSampleFormat(QAudioFormat::Int16);
-    //
-    // QFile file("URL");
-    // file.open(QIODevice::ReadOnly);
-    //
-    // QAudioSink* sink = new QAudioSink(fmt);
-    // sink->start(&file);
-    //
-    // sink->stop();
-    // file.close();
-    // delete sink;
-
     QStringList args = app.arguments();
     if (sendMessageToRunningInstance(args))
         return 0;
 
+    // Remove stale socket if needed
+    QLocalServer::removeServer(APP_SERVER_NAME);
+    QLocalServer server;
+    if (!server.listen(APP_SERVER_NAME)) {
+        qWarning() << "Failed to listen on server:" << server.errorString();
+    }
+
+    app.setWindowIcon(QIcon(":/icon"));
+
     MainWindow mainWindow;
     mainWindow.show();
-    mainWindow.setWindowIcon(QIcon(":/icon.png"));
+
+    FileBrowser fileBrowser;
+    fileBrowser.show();
 
     // Otherwise, start listening for future launches
-    QLocalServer server;
     QObject::connect(&server, &QLocalServer::newConnection, [&]() {
         QLocalSocket *client = server.nextPendingConnection();
         if (client->waitForReadyRead(500)) {
@@ -70,13 +65,6 @@ int main(int argc, char *argv[]) {
         }
         client->deleteLater();
     });
-
-    // Remove stale socket if needed
-    QLocalServer::removeServer(APP_SERVER_NAME);
-    if (!server.listen(APP_SERVER_NAME)) {
-        qWarning() << "Failed to listen on server:" << server.errorString();
-    }
-
 
     for (QString& arg : app.arguments())
         mainWindow.tryOpenFile(arg);

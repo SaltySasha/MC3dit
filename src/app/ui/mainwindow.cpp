@@ -1,6 +1,6 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "dat/datfile.h"
+#include "../../filebrowser/files/fileview.h"
 
 #include <QDragLeaveEvent>
 #include <QMimeData>
@@ -8,7 +8,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-#include "dat/idatfilehandler.h"
+#include "../../filebrowser/dat/datefileentry.h"
+#include "../../filebrowser/filehandlers/ifilehandler.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
@@ -24,8 +25,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
     connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::onTabCloseRequested);
-
-    //testMethod();
 }
 
 MainWindow::~MainWindow() {
@@ -70,7 +69,8 @@ void MainWindow::dropEvent(QDropEvent *event) {
             continue;
         }
 
-        tryOpenFile(url.toLocalFile());
+        qDebug() << url.toLocalFile();
+        //tryOpenFile(url.toLocalFile());
     }
 }
 
@@ -80,7 +80,7 @@ void MainWindow::setButtonsEnabled(const bool enabled) const {
 }
 
 void MainWindow::onTabChanged(int index) {
-    auto *datFile = dynamic_cast<DATFile*>(ui->tabWidget->widget(index));
+    auto *datFile = dynamic_cast<FileView*>(ui->tabWidget->widget(index));
     if (!datFile) {
         ui->unpackLineEdit->clear();
         ui->packLineEdit->clear();
@@ -89,14 +89,14 @@ void MainWindow::onTabChanged(int index) {
         return;
     }
 
-    QString unpackDirectory = datFile->unpackDirectory().isEmpty() ? datFile->fileHandler()->fileInfo().path() : datFile->unpackDirectory();
-    QString packDirectory = datFile->packDirectory().isEmpty() ? datFile->fileHandler()->fileInfo().path() + "/" + datFile->fileHandler()->baseName() : datFile->packDirectory();
-    setUnpackDirectory(unpackDirectory);
-    setPackDirectory(packDirectory);
+    // QString unpackDirectory = datFile->unpackDirectory().isEmpty() ? datFile->fileHandler()->fileInfo().path() : datFile->unpackDirectory();
+    // QString packDirectory = datFile->packDirectory().isEmpty() ? datFile->fileHandler()->fileInfo().path() + "/" + datFile->fileHandler()->baseName() : datFile->packDirectory();
+    // setUnpackDirectory(unpackDirectory);
+    // setPackDirectory(packDirectory);
 }
 
 void MainWindow::onTabCloseRequested(int index) {
-    auto datFile = dynamic_cast<DATFile*>(ui->tabWidget->widget(index));
+    auto datFile = dynamic_cast<FileView*>(ui->tabWidget->widget(index));
     if (!datFile)
         return;
 
@@ -105,24 +105,24 @@ void MainWindow::onTabCloseRequested(int index) {
 
 void MainWindow::onUnpackButtonClicked() {
     refreshButtons();
-    auto *widget = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
+    auto *widget = dynamic_cast<FileView*>(ui->tabWidget->currentWidget());
     if (!widget && !QDir(ui->unpackLineEdit->text()).exists())
         return;
 
-    if (!widget->fileHandler()->fileInfo().isFile()) {
-        QMessageBox::critical(this, "No File", QString("Could not find %1.").arg(widget->fileHandler()->baseName()));
-        return;
-    }
+    // if (!widget->fileHandler()->fileInfo().isFile()) {
+    //     QMessageBox::critical(this, "No File", QString("Could not find %1.").arg(widget->fileHandler()->baseName()));
+    //     return;
+    // }
 
-    ui->tabWidget->tabBar()->tabButton(ui->tabWidget->currentIndex(), QTabBar::RightSide)->hide();
-    widget->fileHandler()->unpackAndExport(ui->unpackLineEdit->text());
+    // ui->tabWidget->tabBar()->tabButton(ui->tabWidget->currentIndex(), QTabBar::RightSide)->hide();
+    // widget->fileHandler()->unpackAndExport(ui->unpackLineEdit->text());
 }
 
 void MainWindow::onPackButtonClicked() {
     refreshButtons();
-    auto *datFile = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
-    if (datFile && QDir(ui->packLineEdit->text()).exists())
-        datFile->fileHandler()->packAndExport(datFile->fileHandler()->fileInfo().path(), ui->packLineEdit->text());
+    auto *datFile = dynamic_cast<FileView*>(ui->tabWidget->currentWidget());
+    // if (datFile && QDir(ui->packLineEdit->text()).exists())
+        // datFile->fileHandler()->packAndExport(datFile->fileHandler()->fileInfo().path(), ui->packLineEdit->text());
 }
 
 void MainWindow::onPackBrowseButtonClicked() {
@@ -130,9 +130,9 @@ void MainWindow::onPackBrowseButtonClicked() {
     if (filePath.isEmpty())
         return;
 
-    auto *datFile = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
-    if (datFile)
-        datFile->setPackDirectory(filePath);
+    // auto *datFile = dynamic_cast<FileView*>(ui->tabWidget->currentWidget());
+    // if (datFile)
+    //     datFile->setPackDirectory(filePath);
     ui->packLineEdit->setText(filePath);
     refreshButtons();
 }
@@ -142,9 +142,9 @@ void MainWindow::onUnpackBrowseButtonClicked() {
     if (folderPath.isEmpty())
         return;
 
-    auto *datFile = dynamic_cast<DATFile*>(ui->tabWidget->currentWidget());
-    if (datFile)
-        datFile->setUnpackDirectory(folderPath);
+    auto *datFile = dynamic_cast<FileView*>(ui->tabWidget->currentWidget());
+    // if (datFile)
+    //     datFile->setUnpackDirectory(folderPath);
     ui->unpackLineEdit->setText(folderPath);
     refreshButtons();
 }
@@ -158,49 +158,49 @@ void MainWindow::tryOpenFile(const QString &filePath) {
     QString cleanFilePath = filePath;
     cleanFilePath.replace('\\', '/');
 
-    // Switch to file tab if file is already opened
-    for (qint32 tabIndex = 0; tabIndex < ui->tabWidget->count(); tabIndex++) {
-        auto* tab = dynamic_cast<DATFile*>(ui->tabWidget->widget(tabIndex));
-        if (tab->fileHandler()->fileInfo().filePath() == cleanFilePath) {
-            ui->tabWidget->setCurrentWidget(tab);
-            return;
-        }
-    }
+    // // Switch to file tab if file is already opened
+    // for (qint32 tabIndex = 0; tabIndex < ui->tabWidget->count(); tabIndex++) {
+    //     auto* tab = dynamic_cast<FileView*>(ui->tabWidget->widget(tabIndex));
+    //     if (tab->fileHandler()->fileInfo().filePath() == cleanFilePath) {
+    //         ui->tabWidget->setCurrentWidget(tab);
+    //         return;
+    //     }
+    // }
 
-    auto *newDatFile = DATFile::create(cleanFilePath);
-    if (!newDatFile)
-        return;
+    // auto *newDatFile = FileView::create(cleanFilePath);
+    // if (!newDatFile)
+    //     return;
 
-    connect(newDatFile->fileHandler(), &IDATFileHandler::setProgressBarMax, this, [this](qint32 newMax) {
-        ui->progressBar->show();
-        ui->progressBar->setMaximum(newMax);
-        lockUi(true);
-    });
-    connect(newDatFile->fileHandler(), &IDATFileHandler::updateProgressBar, this, [this](qint32 newProgressAmount) {
-        ui->progressBar->setValue(newProgressAmount);
-        if (newProgressAmount >= ui->progressBar->maximum())
-            ui->progressBar->hide();
-    });
-    connect(newDatFile->fileHandler(), &IDATFileHandler::exportFinished, this, [this]() {
-        refreshButtons();
-        lockUi(false);
-    });
-    connect(newDatFile->fileHandler(), &IDATFileHandler::readFinished, this, [this]() {
-        lockUi(false);
-    });
-
-    if (!newDatFile->fileHandler()->readFile()) {
-        newDatFile->deleteLater();
-        return;
-    }
-
-    ui->unpackSection->show();
-    ui->packSection->show();
-    ui->tabWidget->addTab(newDatFile, newDatFile->fileHandler()->baseName());
-    ui->tabWidget->setCurrentWidget(newDatFile);
-    ui->tabWidget->tabBar()->setTabToolTip(ui->tabWidget->currentIndex(), newDatFile->fileHandler()->fileInfo().filePath());
-    setUnpackDirectory(newDatFile->fileHandler()->fileInfo().path());
-    setPackDirectory(newDatFile->fileHandler()->fileInfo().path() + "/" + newDatFile->fileHandler()->baseName());
+    // connect(newDatFile->fileHandler(), &IFileHandler::setProgressBarMax, this, [this](qint32 newMax) {
+    //     ui->progressBar->show();
+    //     ui->progressBar->setMaximum(newMax);
+    //     lockUi(true);
+    // });
+    // connect(newDatFile->fileHandler(), &IFileHandler::updateProgressBar, this, [this](qint32 newProgressAmount) {
+    //     ui->progressBar->setValue(newProgressAmount);
+    //     if (newProgressAmount >= ui->progressBar->maximum())
+    //         ui->progressBar->hide();
+    // });
+    // connect(newDatFile->fileHandler(), &IFileHandler::exportFinished, this, [this]() {
+    //     refreshButtons();
+    //     lockUi(false);
+    // });
+    // connect(newDatFile->fileHandler(), &IFileHandler::readFinished, this, [this]() {
+    //     lockUi(false);
+    // });
+    //
+    // if (!newDatFile->fileHandler()->readFile()) {
+    //     newDatFile->deleteLater();
+    //     return;
+    // }
+    //
+    // ui->unpackSection->show();
+    // ui->packSection->show();
+    // ui->tabWidget->addTab(newDatFile, newDatFile->fileHandler()->baseName());
+    // ui->tabWidget->setCurrentWidget(newDatFile);
+    // ui->tabWidget->tabBar()->setTabToolTip(ui->tabWidget->currentIndex(), newDatFile->fileHandler()->fileInfo().filePath());
+    // setUnpackDirectory(newDatFile->fileHandler()->fileInfo().path());
+    // setPackDirectory(newDatFile->fileHandler()->fileInfo().path() + "/" + newDatFile->fileHandler()->baseName());
 }
 
 void MainWindow::refreshButtons() {
@@ -237,17 +237,16 @@ void MainWindow::setPackDirectory(const QString &directory) {
 }
 
 void MainWindow::testMethod() {
-    QString input = "assets/textures/blocks/stone.png.test";
-    QFileInfo fileInfo(input);
-    qDebug() << "input:             " << input << "\n";
-    qDebug() << "baseName:          " << fileInfo.baseName();
-    qDebug() << "completeBaseName:  " << fileInfo.completeBaseName();
-    qDebug() << "completeSuffix:    " << fileInfo.completeSuffix();
-    qDebug() << "fileName:          " << fileInfo.fileName();
-    qDebug() << "filePath:          " << fileInfo.filePath();
-    qDebug() << "path:              " << fileInfo.path();
-    qDebug() << "absoluteFilePath:  " << fileInfo.absoluteFilePath();
-    qDebug() << "absolutePath:      " << fileInfo.absolutePath();
-    qDebug() << "dir:               " << fileInfo.dir();
-
+    // QString input = "assets/textures/blocks/stone.png.test";
+    // QFileInfo fileInfo(input);
+    // qDebug() << "input:             " << input << "\n";
+    // qDebug() << "baseName:          " << fileInfo.baseName();
+    // qDebug() << "completeBaseName:  " << fileInfo.completeBaseName();
+    // qDebug() << "completeSuffix:    " << fileInfo.completeSuffix();
+    // qDebug() << "fileName:          " << fileInfo.fileName();
+    // qDebug() << "filePath:          " << fileInfo.filePath();
+    // qDebug() << "path:              " << fileInfo.path();
+    // qDebug() << "absoluteFilePath:  " << fileInfo.absoluteFilePath();
+    // qDebug() << "absolutePath:      " << fileInfo.absolutePath();
+    // qDebug() << "dir:               " << fileInfo.dir();
 }

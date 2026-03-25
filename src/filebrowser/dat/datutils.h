@@ -4,7 +4,7 @@
 #include <qtypes.h>
 #include <boost/multiprecision/cpp_int.hpp>
 
-class IDATFileHandler;
+class IFileHandler;
 
 struct FileEntry {
     void setFile(const QString &filePath){fileInfo.setFile(filePath);}
@@ -31,6 +31,6 @@ namespace DATUtils {
 
 // Factory to create the appropriate handler
 namespace DATFileFactory {
-    IDATFileHandler* createHandler(const QString &filePath);
+    IFileHandler* createHandler(const QString &filePath);
     inline const QStringList allowedSignatureList_ = {"Dave", "DAVE", "Hash"};
 };

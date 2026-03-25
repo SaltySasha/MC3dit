@@ -27,12 +27,13 @@ file(GLOB_RECURSE SOURCES
         "src/*.h"
 )
 
-file(GLOB UI_FILES
-        "ui/*.ui"
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${SOURCES})
+
+file(GLOB_RECURSE UI_FILES
+        "src/*.ui"
 )
 
 add_executable(MC3dit WIN32
-        main.cpp
         resources/mc3dit.qrc
         ${SOURCES}
         ${UI_FILES}

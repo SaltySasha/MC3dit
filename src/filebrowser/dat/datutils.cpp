@@ -3,9 +3,9 @@
 #include <qendian.h>
 #include <QMessageBox>
 
-#include "handlers/davelowerfilehandler.h"
-#include "handlers/daveupperfilehandler.h"
-#include "handlers/hashfilehandler.h"
+#include "../filehandlers/davelowerhandler.h"
+#include "../filehandlers/daveupperhandler.h"
+#include "../filehandlers/hashhandler.h"
 
 namespace DATUtils {
     quint32 toLittleEndian(const QByteArray &byteArray) {
@@ -37,12 +37,12 @@ namespace DATUtils {
     }
 
     void messageFileNotFound(const QString &fileName, const QString &errorString) {
-        QMessageBox::warning(nullptr, "Unable To Open File", QString("Could not open %1 with reason:\n %2").arg(fileName, errorString));
+        QMessageBox::warning(nullptr, "Unable To Open File", QString("Could not open %1 with reason:\n%2").arg(fileName, errorString));
     }
 }
 
 namespace DATFileFactory {
-    IDATFileHandler * createHandler(const QString &filePath) {
+    IFileHandler * createHandler(const QString &filePath) {
         QFile file(filePath);
         if (!file.exists()) {
             QMessageBox::warning(nullptr, "No File", QString("Could not find %1 with reason:\n %2").arg(file.fileName(), file.errorString()));
@@ -62,15 +62,15 @@ namespace DATFileFactory {
             return nullptr;
         }
 
-        // Create handler based on signature
-        if (fileSignature == "Dave")
-            return new DaveLowerFileHandler(filePath);
-
-        if (fileSignature == "DAVE")
-            return new DaveUpperFileHandler(filePath);
-
-        if (fileSignature == "Hash")
-            return new HashFileHandler(filePath);
+        // // Create handler based on signature
+        // if (fileSignature == "Dave")
+        //     return new DaveLowerFileHandler(filePath);
+        //
+        // if (fileSignature == "DAVE")
+        //     return new DaveUpperFileHandler(filePath);
+        //
+        // if (fileSignature == "Hash")
+        //     return new HashFileHandler(filePath);
 
         return nullptr;
     }
