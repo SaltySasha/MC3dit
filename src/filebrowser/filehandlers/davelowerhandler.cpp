@@ -162,43 +162,6 @@ using namespace DATUtils;
 //     return getIntAsBytes(compName, byteSize);
 // }
 
-// bool DaveLowerFileHandler::populateModel(QStandardItem* rootItem) {
-//     auto file = QFile(fileInfo_.absoluteFilePath());
-//     if (!file.open(QIODeviceBase::ReadOnly)) {
-//         messageFileNotFound(file.fileName(), file.errorString());
-//         return false;
-//     }
-//
-//     file.read(4);
-//     quint32 entryCount = toLittleEndian(file.read(4));
-//     quint32 entriesBlockSize = toLittleEndian(file.read(4));
-//
-//     QString filePath;
-//     FileEntry newEntry;
-//     // emit setProgressBarMax(entryCount_);
-//     for (quint32 i = 0; i < entryCount; i++) {
-//         file.seek(0x800 + i * 0x10);
-//         newEntry.nameOffset = toLittleEndian(file.read(4)) + entriesBlockSize + 0x800;
-//         newEntry.fileOffset = toLittleEndian(file.read(4));
-//         newEntry.sizeFull = toLittleEndian(file.read(4));
-//         newEntry.sizeCompressed = toLittleEndian(file.read(4));
-//         file.seek(newEntry.nameOffset);
-//
-//         filePath = readEntryPath(file, filePath);
-//         if (filePath.endsWith("/"))
-//             continue;
-//
-//         newEntry.setFile(filePath);
-//
-//         addVirtualPath(rootItem, newEntry);
-//         // updateProgressBar(i + 1);
-//     }
-//
-//     file.close();
-//     // emit readFinished(true);
-//     return true;
-// }
-
 bool DaveLowerFileHandler::parseFile() {
 auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {

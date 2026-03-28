@@ -4,12 +4,9 @@
 
 class HashFileHandler : public IFileHandler {
 public:
-
-    // bool populateModel(QStandardItem* rootItem) override;
-
 //     bool unpackAndExport(const QString &exportDirectory) override;
 //     bool packAndExport(const QString &exportDirectoryPath, const QString &sourceDirectoryPath) override;
-//
+
 protected:
     bool parseFile() override;
 //     bool validateChars(const QString &filePath) const override;

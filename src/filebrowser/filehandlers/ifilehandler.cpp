@@ -32,7 +32,6 @@ void IFileHandler::addVirtualPath(QStandardItem *rootItem, const EntryInfo &entr
     }
 
     auto *newFileEntry = new EntryItem(entryInfo);
-    entryList_.append(newFileEntry);
     parent->appendRow(newFileEntry);
 }
 

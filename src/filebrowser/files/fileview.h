@@ -12,7 +12,6 @@ class FileView : public QTreeView {
 
 public:
     explicit FileView(QWidget *parent = nullptr, const QString& filePath = "");
-    ~FileView() override;
 
     [[nodiscard]] bool isValid() const {return fileHandler_ != nullptr;}
     // static FileView* create(const QString &filePath);
@@ -31,7 +30,7 @@ signals:
     // void exportFinished();
 
 protected:
-    std::unique_ptr<IFileHandler> fileHandler_;
+    IFileHandler* fileHandler_;
     QStandardItemModel* model_;
 
     // QString unpackDirectory_;

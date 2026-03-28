@@ -8,7 +8,7 @@
 #include "../filehandlers/ifilehandler.h"
 
 FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent) {
-    fileHandler_ = FileHandleFactory::instance().createHandler(filePath);
+    fileHandler_ = FileHandleFactory::instance().createHandler(filePath, this);
     if (!fileHandler_)
         return;
 
@@ -25,7 +25,7 @@ FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent)
     connect(parseWatcher, &QFutureWatcher<bool>::finished, this, [this, parseWatcher]() {
         bool parseSuccess = parseWatcher->result();
         if (parseSuccess) {
-            connect(fileHandler_.get(), &IFileHandler::populationFinished, this, [this]() {
+            connect(fileHandler_, &IFileHandler::populationFinished, this, [this]() {
                 setModel(model_);
                 emit fileLoaded(model_->rowCount() > 0);
             });
@@ -38,8 +38,6 @@ FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent)
 
     parseWatcher->setFuture(parseFuture);
 }
-
-FileView::~FileView() = default;
 
 // FileView * FileView::create(const QString &filePath) {
 //     auto* datFile = new FileView(filePath);

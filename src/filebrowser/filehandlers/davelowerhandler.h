@@ -4,8 +4,6 @@
 
 class DaveLowerFileHandler : public IFileHandler {
 public:
-    // bool populateModel(QStandardItem* rootItem) override;
-    // explicit DaveLowerFileHandler(const QString& filePath) : DaveFileHandlerBase(filePath) {}
 
 protected:
    bool parseFile() override;

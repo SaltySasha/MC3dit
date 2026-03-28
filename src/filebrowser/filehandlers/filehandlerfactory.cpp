@@ -7,7 +7,7 @@
 
 #include "ifilehandler.h"
 
-std::unique_ptr<IFileHandler> FileHandleFactory::createHandler(const QString &filePath) {
+IFileHandler* FileHandleFactory::createHandler(const QString &filePath, QObject *parent) {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
         qWarning() << "Unable to open file:" << filePath << "with error:" << file.errorString();
@@ -19,9 +19,10 @@ std::unique_ptr<IFileHandler> FileHandleFactory::createHandler(const QString &fi
 
     auto iterator = handlerMap_.find(magic);
     if (iterator != handlerMap_.end()) {
-        std::function<std::unique_ptr<IFileHandler>()> factory = iterator.value();
-        std::unique_ptr<IFileHandler> handler = factory();
+        std::function<IFileHandler*()> factory = iterator.value();
+        IFileHandler* handler = factory();
         handler->setFileInfo(QFileInfo(filePath));
+        handler->setParent(parent);
         return handler;
     }
 

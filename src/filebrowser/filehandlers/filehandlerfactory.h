@@ -12,8 +12,8 @@ public:
         return registry;
     }
 
-    using HandlerFactory = std::function<std::unique_ptr<IFileHandler>()>;
-    std::unique_ptr<IFileHandler> createHandler(const QString& filePath);
+    using HandlerFactory = std::function<IFileHandler*()>;
+    IFileHandler* createHandler(const QString& filePath, QObject *parent);
     bool registerHandler(const QString& magic, const HandlerFactory &factory);
 
 private:
@@ -25,7 +25,7 @@ class FileHandlerRegistrar {
 public:
     explicit FileHandlerRegistrar(const QString& magic) {
         FileHandleFactory::instance().registerHandler(magic, []() {
-            return std::make_unique<HandlerType>();
+            return new HandlerType();
         });
     }
 };

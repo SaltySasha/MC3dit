@@ -47,8 +47,8 @@ int main(int argc, char *argv[]) {
 
     app.setWindowIcon(QIcon(":/icon"));
 
-    MainWindow mainWindow;
-    mainWindow.show();
+    // MainWindow mainWindow;
+    // mainWindow.show();
 
     FileBrowser fileBrowser;
     fileBrowser.show();
@@ -61,13 +61,15 @@ int main(int argc, char *argv[]) {
             QStringList paths = message.split('\n', Qt::SkipEmptyParts);
 
             for (QString& path : paths)
-                mainWindow.tryOpenFile(path);
+                continue;
+                // mainWindow.tryOpenFile(path);
         }
         client->deleteLater();
     });
 
     for (QString& arg : app.arguments())
-        mainWindow.tryOpenFile(arg);
+        continue;
+        // mainWindow.tryOpenFile(arg);
 
     return QApplication::exec();
 }
