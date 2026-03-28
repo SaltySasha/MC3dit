@@ -32,8 +32,9 @@ protected:
     const QString signature_ = "SaltyWasHere:)";
     QFileInfo fileInfo_;
     QList<EntryItem*> entryList_;
+    QHash<QString, EntryItem*> pathCache_;
     QList<DATFileEntry*> files_;
-    QHash<QString, DATFolderEntry*> pathCache_;
+    QHash<QString, DATFolderEntry*> pathCacheDELETE_;
     QList<ParsedFileEntry> parsedEntries_;
 
     void addVirtualPath(QStandardItem* rootItem, const FileEntry &fileEntry);

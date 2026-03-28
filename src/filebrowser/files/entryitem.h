@@ -22,10 +22,10 @@ struct EntryInfo {
     QHash<QString, quint32> metadata;
 };
 
-class EntryItem : public QStandardItem, QObject {
+class EntryItem : public QStandardItem {
 
 public:
-    explicit EntryItem(const EntryInfo& entryInfo, QObject* parent = nullptr);
+    explicit EntryItem(const EntryInfo& entryInfo);
     [[nodiscard]] bool isDir() const {return entryInfo_.fileInfo.isDir();}
 
 protected:

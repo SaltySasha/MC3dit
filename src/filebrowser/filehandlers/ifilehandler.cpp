@@ -18,19 +18,19 @@ void IFileHandler::addVirtualPath(QStandardItem* rootItem, const FileEntry &file
 
         DATFolderEntry* folderEntry = nullptr;
 
-        if (pathCache_.contains(currentPath)) {
-            folderEntry = pathCache_[currentPath];
+        if (pathCacheDELETE_.contains(currentPath)) {
+            folderEntry = pathCacheDELETE_[currentPath];
         } else {
-            folderEntry = new DATFolderEntry(currentPath, this);
+            folderEntry = new DATFolderEntry(currentPath);
             parent->appendRow(folderEntry);
 
-            pathCache_[currentPath] = folderEntry;
+            pathCacheDELETE_[currentPath] = folderEntry;
         }
 
         parent = folderEntry;
     }
 
-    auto *newFile = new DATFileEntry(fileEntry, this);
+    auto *newFile = new DATFileEntry(fileEntry);
     files_.append(newFile);
     parent->appendRow(newFile);
 }

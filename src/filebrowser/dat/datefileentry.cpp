@@ -2,8 +2,8 @@
 
 #include <QAbstractFileIconProvider>
 
-DATFileEntry::DATFileEntry(const FileEntry &fileEntry, QObject *parent)
-    : QStandardItem(fileEntry.fileInfo.fileName()), QObject(parent) {
+DATFileEntry::DATFileEntry(const FileEntry &fileEntry)
+    : QStandardItem(fileEntry.fileInfo.fileName()) {
     fileEntry_ = fileEntry;
     QStandardItem::setData(0, Qt::UserRole + 1);  // 0 = file
     setIcon(QAbstractFileIconProvider().icon(QAbstractFileIconProvider::File));

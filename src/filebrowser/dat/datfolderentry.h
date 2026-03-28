@@ -4,9 +4,9 @@
 #include <QStandardItem>
 
 
-class DATFolderEntry : public QStandardItem, QObject{
+class DATFolderEntry : public QStandardItem{
 public:
-    explicit DATFolderEntry(const QString &virtualFilePath, QObject *parent = nullptr);
+    explicit DATFolderEntry(const QString &virtualFilePath);
     ~DATFolderEntry() override;
 
 private:

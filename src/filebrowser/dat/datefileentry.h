@@ -4,9 +4,9 @@
 #include "datutils.h"
 
 
-class DATFileEntry : public QStandardItem, QObject {
+class DATFileEntry : public QStandardItem {
 public:
-    explicit DATFileEntry(const FileEntry &fileEntry, QObject *parent = nullptr);
+    explicit DATFileEntry(const FileEntry &fileEntry);
 
     QString fileName() const {return fileEntry_.fileName();}
     quint32 fileOffset() const {return fileEntry_.fileOffset;}
