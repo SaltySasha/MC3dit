@@ -20,20 +20,21 @@ public:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dragMoveEvent(QDragMoveEvent *event) override;
     void dropEvent(QDropEvent *event) override;
-    void tabCloseRequested(int index);
+    void tabCloseRequested(quint32 index);
 
     [[nodiscard]] bool tabExists(const QString &filePath, bool setCurrent = false) const;
 
-private:
+protected:
     Ui::FileBrowser *ui;
 
-    QMap<int, QTimer*> loadingTimers_;
+    QMap<quint32, QTimer*> loadingTimers_;
     QList<QString> spinnerChars_ = {
         "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
     };
     QList<QIcon> spinnerIcons_;
 
-    void toggleTabLoadingIndicator(int tabIndex, bool enabled);
+    void toggleTabLoadingIndicator(quint32 tabIndex, bool enabled);
     QIcon createTextIcon(const QString& text);
-    void toggleTabCloseButton(int tabIndex, bool enabled);
+    void toggleTabCloseButton(quint32 tabIndex, bool enabled);
+    void setLineEditTexts();
 };

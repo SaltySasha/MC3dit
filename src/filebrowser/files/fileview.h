@@ -12,13 +12,14 @@ class FileView : public QTreeView {
 
 public:
     explicit FileView(QWidget *parent = nullptr, const QString& filePath = "");
-
     [[nodiscard]] bool isValid() const {return fileHandler_ != nullptr;}
+    [[nodiscard]] QString unpackDirectory() const {return unpackDirectory_;}
+    [[nodiscard]] QString packDirectory() const {return packDirectory_;}
+
     // static FileView* create(const QString &filePath);
 
     // IFileHandler* fileHandler() const {return fileHandler_;}
-    // QString unpackDirectory() const {return unpackDirectory_;}
-    // QString packDirectory() const {return packDirectory_;}
+
     // void setUnpackDirectory(const QString &unpackDirectory) {unpackDirectory_ = unpackDirectory;}
     // void setPackDirectory(const QString &packDirectory) {packDirectory_ = packDirectory;}
 
@@ -32,10 +33,9 @@ signals:
 protected:
     IFileHandler* fileHandler_;
     QStandardItemModel* model_;
+    QString unpackDirectory_;
+    QString packDirectory_;
 
-    // QString unpackDirectory_;
-    // QString packDirectory_;
-    //
     // void openContextMenu();
     // void exportSingleFile();
 };

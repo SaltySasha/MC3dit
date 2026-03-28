@@ -17,6 +17,12 @@ FileBrowser::FileBrowser(QWidget *parent)
         spinnerIcons_.append(createTextIcon(spinnerChar));
 
     connect(ui->fileTabWidget, &QTabWidget::tabCloseRequested, this, &FileBrowser::tabCloseRequested);
+    connect(ui->fileTabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+        setLineEditTexts();
+    });
+    connect(ui->packLineEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+        ui->packButton->setEnabled(QFileInfo(text).isDir());
+    });
 }
 
 FileBrowser::~FileBrowser() {
@@ -77,13 +83,13 @@ void FileBrowser::dropEvent(QDropEvent *event) {
 
         QString fileName = QFileInfo(url.toLocalFile()).fileName();
         int newTabIndex = ui->fileTabWidget->addTab(newFileView, fileName);
+        toggleTabLoadingIndicator(newTabIndex, true);
         ui->fileTabWidget->setCurrentIndex(newTabIndex);
         ui->fileTabWidget->tabBar()->setTabToolTip(newTabIndex, url.toLocalFile());
 
-        toggleTabLoadingIndicator(newTabIndex, true);
-
         connect(newFileView, &FileView::fileLoaded, this, [this, newFileView, url, newTabIndex](bool success) {
             toggleTabLoadingIndicator(newTabIndex, false);
+            setLineEditTexts();
 
             if (!success) {
                 QMessageBox::warning(this, "Couldn't Load File", QString("Unable to load file:\n%1").arg(url.toLocalFile()));
@@ -94,7 +100,7 @@ void FileBrowser::dropEvent(QDropEvent *event) {
     }
 }
 
-void FileBrowser::tabCloseRequested(int index) {
+void FileBrowser::tabCloseRequested(quint32 index) {
     ui->fileTabWidget->widget(index)->deleteLater();
     ui->fileTabWidget->removeTab(index);
 }
@@ -111,7 +117,7 @@ bool FileBrowser::tabExists(const QString &filePath, bool setCurrent) const {
     return false;
 }
 
-void FileBrowser::toggleTabLoadingIndicator(int tabIndex, bool enabled) {
+void FileBrowser::toggleTabLoadingIndicator(quint32 tabIndex, bool enabled) {
     if (enabled) {
         auto* timer = new QTimer(this);
         loadingTimers_[tabIndex] = timer;
@@ -159,9 +165,21 @@ QIcon FileBrowser::createTextIcon(const QString &text) {
     return QIcon(pixmap);
 }
 
-void FileBrowser::toggleTabCloseButton(int tabIndex, bool enabled) {
+void FileBrowser::toggleTabCloseButton(quint32 tabIndex, bool enabled) {
     QTabBar* bar = ui->fileTabWidget->tabBar();
-    QWidget* closeBtn = bar->tabButton(tabIndex, QTabBar::RightSide);
-    if (closeBtn)
-        enabled ? closeBtn->show() : closeBtn->hide();
+    QWidget* closeButton = bar->tabButton(tabIndex, QTabBar::RightSide);
+    if (closeButton)
+        enabled ? closeButton->show() : closeButton->hide();
+}
+
+void FileBrowser::setLineEditTexts() {
+    auto* fileView = dynamic_cast<FileView*>(ui->fileTabWidget->currentWidget());
+    if (fileView && !loadingTimers_.contains(ui->fileTabWidget->currentIndex())) {
+        ui->unpackLineEdit->setText(fileView->unpackDirectory());
+        ui->packLineEdit->setText(fileView->packDirectory());
+    }
+    else {
+        ui->unpackLineEdit->clear();
+        ui->packLineEdit->clear();
+    }
 }

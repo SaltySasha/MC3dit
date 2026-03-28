@@ -12,9 +12,10 @@ FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent)
     if (!fileHandler_)
         return;
 
-    model_ = new QStandardItemModel(this);
-    model_->setHorizontalHeaderLabels({"Name"}); // TODO: Size
-    model_->setSortRole(Qt::UserRole + 1);
+    QString directory = fileHandler_->getFileInfo().path() + "/" + fileHandler_->getFileInfo().baseName();
+    unpackDirectory_ = directory;
+    packDirectory_ = directory;
+
     setSortingEnabled(true);
 
     QFuture<bool> parseFuture = QtConcurrent::run([this]() {
@@ -23,8 +24,11 @@ FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent)
 
     auto* parseWatcher = new QFutureWatcher<bool>(this);
     connect(parseWatcher, &QFutureWatcher<bool>::finished, this, [this, parseWatcher]() {
-        bool parseSuccess = parseWatcher->result();
-        if (parseSuccess) {
+        if (parseWatcher->result()) {
+            model_ = new QStandardItemModel(this);
+            model_->setHorizontalHeaderLabels({"Name"}); // TODO: Size
+            model_->setSortRole(Qt::UserRole + 1);
+
             connect(fileHandler_, &IFileHandler::populationFinished, this, [this]() {
                 setModel(model_);
                 emit fileLoaded(model_->rowCount() > 0);

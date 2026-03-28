@@ -103,6 +103,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="unpackButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="font">
          <font>
           <family>Courier New</family>
@@ -154,6 +157,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="packButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="font">
          <font>
           <family>Courier New</family>
