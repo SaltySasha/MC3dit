@@ -6,24 +6,6 @@
 #include "../dat/datfolderentry.h"
 #include "../files/entryitem.h"
 
-bool IFileHandler::populateModel(QStandardItem* rootItem) {
-    if (parsedEntries_.isEmpty()) {
-        return false;
-    }
-
-    for (const ParsedFileEntry& entry : parsedEntries_) {
-        addVirtualPath(rootItem, entry.entry);
-    }
-
-    // TESTING CODE
-    for (auto& entry : entryList_) {
-        rootItem->appendRow(entry);
-    }
-    // END TESTING CODE
-
-    return true;
-}
-
 void IFileHandler::addVirtualPath(QStandardItem* rootItem, const FileEntry &fileEntry) {
     const QString virtualPath = fileEntry.filePath();
     QStringList pathParts = virtualPath.split("/", Qt::SkipEmptyParts);
@@ -53,7 +35,7 @@ void IFileHandler::addVirtualPath(QStandardItem* rootItem, const FileEntry &file
     parent->appendRow(newFile);
 }
 
-void IFileHandler::populateModelBatched(QStandardItem* rootItem) {
+void IFileHandler::populateModel(QStandardItem* rootItem) {
     // Process in batches of 100 items
     const int batchSize = 100;
     int currentIndex = 0;

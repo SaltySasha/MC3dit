@@ -20,10 +20,9 @@ class IFileHandler : public QObject {
     Q_OBJECT
 
 public:
-    virtual bool parseFile() = 0;
-    virtual bool populateModel(QStandardItem* rootItem);
     virtual void setFileInfo(const QFileInfo &fileInfo) {fileInfo_ = fileInfo;}
-    void populateModelBatched(QStandardItem* rootItem);
+    virtual bool parseFile() = 0;
+    virtual void populateModel(QStandardItem* rootItem);
 
 signals:
     void parseFinished(bool success);

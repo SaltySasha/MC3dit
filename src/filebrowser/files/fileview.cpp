@@ -30,7 +30,7 @@ FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent)
                 emit fileLoaded(model_->rowCount() > 0);
             });
 
-            fileHandler_->populateModelBatched(model_->invisibleRootItem());
+            fileHandler_->populateModel(model_->invisibleRootItem());
         }
 
         parseWatcher->deleteLater();
