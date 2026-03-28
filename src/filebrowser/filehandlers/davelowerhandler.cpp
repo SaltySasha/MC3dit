@@ -4,6 +4,7 @@
 #include <QMessageBox>
 
 #include "../dat/datutils.h"
+#include "../files/entryitem.h"
 
 REGISTER_FILE_HANDLER(DaveLowerFileHandler, QString("Dave"));
 

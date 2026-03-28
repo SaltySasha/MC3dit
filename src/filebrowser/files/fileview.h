@@ -14,7 +14,7 @@ public:
     explicit FileView(QWidget *parent = nullptr, const QString& filePath = "");
     ~FileView() override;
 
-    bool isValid() const {return fileHandler_ != nullptr;}
+    [[nodiscard]] bool isValid() const {return fileHandler_ != nullptr;}
     // static FileView* create(const QString &filePath);
 
     // IFileHandler* fileHandler() const {return fileHandler_;}

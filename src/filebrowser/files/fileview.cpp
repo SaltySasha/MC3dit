@@ -1,7 +1,7 @@
 ﻿#include "fileview.h"
 #include <QAbstractFileIconProvider>
 #include <QFileDialog>
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent>
 
 #include "../dat/datefileentry.h"
 #include "../filehandlers/filehandlerfactory.h"
@@ -17,25 +17,26 @@ FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent)
     model_->setSortRole(Qt::UserRole + 1);
     setSortingEnabled(true);
 
-    QFuture<bool> future = QtConcurrent::run([this]() {
+    QFuture<bool> parseFuture = QtConcurrent::run([this]() {
         return fileHandler_->parseFile();
     });
 
-    auto* watcher = new QFutureWatcher<bool>(this);
-    connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
-        bool success = watcher->result();
-        if (success) {
-            bool modelReady = fileHandler_->populateModel(model_->invisibleRootItem());
-            if (modelReady)
+    auto* parseWatcher = new QFutureWatcher<bool>(this);
+    connect(parseWatcher, &QFutureWatcher<bool>::finished, this, [this, parseWatcher]() {
+        bool parseSuccess = parseWatcher->result();
+        if (parseSuccess) {
+            connect(fileHandler_.get(), &IFileHandler::populationFinished, this, [this]() {
                 setModel(model_);
-            success = modelReady;
+                emit fileLoaded(model_->rowCount() > 0);
+            });
+
+            fileHandler_->populateModelBatched(model_->invisibleRootItem());
         }
 
-        emit fileLoaded(success);
-        watcher->deleteLater();
+        parseWatcher->deleteLater();
     });
 
-    watcher->setFuture(future);
+    parseWatcher->setFuture(parseFuture);
 }
 
 FileView::~FileView() = default;

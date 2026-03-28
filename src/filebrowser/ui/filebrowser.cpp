@@ -75,17 +75,14 @@ void FileBrowser::dropEvent(QDropEvent *event) {
         QString fileName = QFileInfo(url.toLocalFile()).fileName();
         int newTabIndex = ui->fileTabWidget->addTab(newFileView, fileName);
         ui->fileTabWidget->setCurrentIndex(newTabIndex);
+        ui->fileTabWidget->tabBar()->setTabToolTip(newTabIndex, url.toLocalFile());
 
-        startTabLoadingIndicator(newTabIndex);
-        toggleTabCloseButton(newTabIndex, false);
+        toggleTabLoadingIndicator(newTabIndex, true);
 
         connect(newFileView, &FileView::fileLoaded, this, [this, newFileView, url, newTabIndex](bool success) {
-            stopTabLoadingIndicator(newTabIndex);
-            toggleTabCloseButton(newTabIndex, true);
+            toggleTabLoadingIndicator(newTabIndex, false);
 
-            if (success) {
-                ui->fileTabWidget->tabBar()->setTabToolTip(newTabIndex, url.toLocalFile());
-            } else {
+            if (!success) {
                 QMessageBox::warning(this, "Couldn't Load File", QString("Unable to load file:\n%1").arg(url.toLocalFile()));
                 newFileView->deleteLater();
                 ui->fileTabWidget->removeTab(newTabIndex);
@@ -111,33 +108,36 @@ bool FileBrowser::tabExists(const QString &filePath, bool setCurrent) const {
     return false;
 }
 
-void FileBrowser::startTabLoadingIndicator(int tabIndex) {
-    auto* timer = new QTimer(this);
-    loadingTimers_[tabIndex] = timer;
+void FileBrowser::toggleTabLoadingIndicator(int tabIndex, bool enabled) {
+    if (enabled) {
+        auto* timer = new QTimer(this);
+        loadingTimers_[tabIndex] = timer;
 
-    int frame = 0;
-    connect(timer, &QTimer::timeout, this, [this, tabIndex, frame]() mutable {
-        if (tabIndex >= ui->fileTabWidget->count()) {
-            stopTabLoadingIndicator(tabIndex);
-            return;
-        }
+        int frame = 0;
+        connect(timer, &QTimer::timeout, this, [this, tabIndex, frame]() mutable {
+            if (tabIndex >= ui->fileTabWidget->count()) {
+                toggleTabLoadingIndicator(tabIndex, false);
+                return;
+            }
 
-        QString spinnerChar = spinnerChars_[frame % spinnerChars_.size()];
-        ui->fileTabWidget->setTabIcon(tabIndex, createTextIcon(spinnerChar));
-        frame++;
-    });
+            QString spinnerChar = spinnerChars_[frame % spinnerChars_.size()];
+            ui->fileTabWidget->setTabIcon(tabIndex, createTextIcon(spinnerChar));
+            frame++;
+        });
 
-    timer->start(60);
-}
-
-void FileBrowser::stopTabLoadingIndicator(int tabIndex) {
-    if (loadingTimers_.contains(tabIndex)) {
-        loadingTimers_[tabIndex]->stop();
-        loadingTimers_[tabIndex]->deleteLater();
-        loadingTimers_.remove(tabIndex);
-
-        ui->fileTabWidget->setTabIcon(tabIndex, QIcon());
+        timer->start(60);
     }
+    else {
+        if (loadingTimers_.contains(tabIndex)) {
+            loadingTimers_[tabIndex]->stop();
+            loadingTimers_[tabIndex]->deleteLater();
+            loadingTimers_.remove(tabIndex);
+
+            ui->fileTabWidget->setTabIcon(tabIndex, QIcon());
+        }
+    }
+
+    toggleTabCloseButton(tabIndex, !enabled);
 }
 
 QIcon FileBrowser::createTextIcon(const QString &text) {

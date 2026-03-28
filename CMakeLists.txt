@@ -13,6 +13,7 @@ find_package(Qt6 REQUIRED COMPONENTS
         Widgets
         Network
         Multimedia
+        Concurrent
 )
 find_package(Boost REQUIRED COMPONENTS
         multiprecision)
@@ -47,6 +48,7 @@ target_link_libraries(MC3dit
         Qt::Widgets
         Qt::Network
         Qt::Multimedia
+        Qt::Concurrent
         Boost::multiprecision
         winmm
 )

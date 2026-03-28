@@ -4,11 +4,12 @@
 #include <QString>
 
 struct EntryInfo {
-    QString name() const {
+    [[nodiscard]] QString name() const {
         return fileInfo.isDir() ? fileInfo.path().split('/', Qt::SkipEmptyParts).last() : fileInfo.fileName();
     }
-    QString filePath() const {return fileInfo.filePath();}
-    QString path() const {return fileInfo.path();}
+    [[nodiscard]] QString filePath() const {return fileInfo.filePath();}
+    [[nodiscard]] QString path() const {return fileInfo.path();}
+
     void setMetadata(const QString& key, quint32 value) {metadata.insert(key, value);}
     bool getMetadata(const QString& key, quint32& value) const {
         if (!metadata.contains(key))
@@ -21,10 +22,11 @@ struct EntryInfo {
     QHash<QString, quint32> metadata;
 };
 
-class entryItem : public QStandardItem, QObject {
+class EntryItem : public QStandardItem, QObject {
 
 public:
-    explicit entryItem(const EntryInfo& entryInfo, QObject* parent = nullptr);
+    explicit EntryItem(const EntryInfo& entryInfo, QObject* parent = nullptr);
+    [[nodiscard]] bool isDir() const {return entryInfo_.fileInfo.isDir();}
 
 protected:
     EntryInfo entryInfo_;

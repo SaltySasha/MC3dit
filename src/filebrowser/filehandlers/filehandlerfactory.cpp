@@ -11,6 +11,7 @@ std::unique_ptr<IFileHandler> FileHandleFactory::createHandler(const QString &fi
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
         qWarning() << "Unable to open file:" << filePath << "with error:" << file.errorString();
+
         return nullptr;
     }
     QString magic = file.read(4);
@@ -29,7 +30,7 @@ std::unique_ptr<IFileHandler> FileHandleFactory::createHandler(const QString &fi
 
 bool FileHandleFactory::registerHandler(const QString& magic, const HandlerFactory& factory) {;
     if (handlerMap_.contains(magic)) {
-        qWarning() << "Handler already registered for extension:" << magic;
+        qWarning() << "Handler already registered for magic bytes:" << magic;
         return false;
     }
     handlerMap_[magic] = factory;

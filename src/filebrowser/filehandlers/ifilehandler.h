@@ -7,6 +7,7 @@
 
 class DATFolderEntry;
 class DATFileEntry;
+class EntryItem;
 
 struct ParsedFileEntry {
     QString path;
@@ -22,14 +23,19 @@ public:
     virtual bool parseFile() = 0;
     virtual bool populateModel(QStandardItem* rootItem);
     virtual void setFileInfo(const QFileInfo &fileInfo) {fileInfo_ = fileInfo;}
+    void populateModelBatched(QStandardItem* rootItem);
+
+signals:
+    void parseFinished(bool success);
+    void populationFinished();
 
 protected:
     const QString signature_ = "SaltyWasHere:)";
     QFileInfo fileInfo_;
-    // QVector<EntryInfo> entryList_;
+    QList<EntryItem*> entryList_;
     QList<DATFileEntry*> files_;
     QHash<QString, DATFolderEntry*> pathCache_;
-    QVector<ParsedFileEntry> parsedEntries_;
+    QList<ParsedFileEntry> parsedEntries_;
 
     void addVirtualPath(QStandardItem* rootItem, const FileEntry &fileEntry);
 };

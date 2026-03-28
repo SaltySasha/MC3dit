@@ -22,7 +22,7 @@ public:
     void dropEvent(QDropEvent *event) override;
     void tabCloseRequested(int index);
 
-    bool tabExists(const QString &filePath, bool setCurrent = false) const;
+    [[nodiscard]] bool tabExists(const QString &filePath, bool setCurrent = false) const;
 
 private:
     Ui::FileBrowser *ui;
@@ -32,8 +32,7 @@ private:
         "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
     };
 
-    void startTabLoadingIndicator(int tabIndex);
-    void stopTabLoadingIndicator(int tabIndex);
+    void toggleTabLoadingIndicator(int tabIndex, bool enabled);
     QIcon createTextIcon(const QString& text);
     void toggleTabCloseButton(int tabIndex, bool enabled);
 };
