@@ -4,10 +4,9 @@
 
 #include "../dat/datefileentry.h"
 #include "../dat/datfolderentry.h"
-#include "../files/entryitem.h"
 
-void IFileHandler::addVirtualPath(QStandardItem* rootItem, const FileEntry &fileEntry) {
-    const QString virtualPath = fileEntry.filePath();
+void IFileHandler::addVirtualPath(QStandardItem *rootItem, const EntryInfo &entryInfo) {
+    const QString virtualPath = entryInfo.fileInfo.filePath();
     QStringList pathParts = virtualPath.split("/", Qt::SkipEmptyParts);
     QStandardItem* parent = rootItem;
     QString currentPath;
@@ -16,23 +15,25 @@ void IFileHandler::addVirtualPath(QStandardItem* rootItem, const FileEntry &file
         const QString& part = pathParts[i];
         currentPath += part + "/";
 
-        DATFolderEntry* folderEntry = nullptr;
+        EntryItem* folderEntry = nullptr;
 
-        if (pathCacheDELETE_.contains(currentPath)) {
-            folderEntry = pathCacheDELETE_[currentPath];
+        if (pathCache_.contains(currentPath)) {
+            folderEntry = pathCache_[currentPath];
         } else {
-            folderEntry = new DATFolderEntry(currentPath);
+            EntryInfo newFolderEntry;
+            newFolderEntry.fileInfo = QFileInfo(currentPath);
+            folderEntry = new EntryItem(newFolderEntry);
             parent->appendRow(folderEntry);
 
-            pathCacheDELETE_[currentPath] = folderEntry;
+            pathCache_[currentPath] = folderEntry;
         }
 
         parent = folderEntry;
     }
 
-    auto *newFile = new DATFileEntry(fileEntry);
-    files_.append(newFile);
-    parent->appendRow(newFile);
+    auto *newFileEntry = new EntryItem(entryInfo);
+    entryList_.append(newFileEntry);
+    parent->appendRow(newFileEntry);
 }
 
 void IFileHandler::populateModel(QStandardItem* rootItem) {
@@ -42,15 +43,15 @@ void IFileHandler::populateModel(QStandardItem* rootItem) {
 
     auto* timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, [this, currentIndex, rootItem, timer]() mutable {
-        int endIndex = qMin(currentIndex + batchSize, parsedEntries_.size());
+        int endIndex = qMin(currentIndex + batchSize, entryInfoList_.size());
 
         for (int i = currentIndex; i < endIndex; ++i) {
-            addVirtualPath(rootItem, parsedEntries_[i].entry);
+            addVirtualPath(rootItem, entryInfoList_[i]);
         }
 
         currentIndex = endIndex;
 
-        if (currentIndex >= parsedEntries_.size()) {
+        if (currentIndex >= entryInfoList_.size()) {
             timer->stop();
             timer->deleteLater();
             emit populationFinished();

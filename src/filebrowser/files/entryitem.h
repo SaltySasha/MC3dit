@@ -5,10 +5,11 @@
 
 struct EntryInfo {
     [[nodiscard]] QString name() const {
-        return fileInfo.isDir() ? fileInfo.path().split('/', Qt::SkipEmptyParts).last() : fileInfo.fileName();
+        return isDir() ? fileInfo.path().split('/', Qt::SkipEmptyParts).last() : fileInfo.fileName();
     }
     [[nodiscard]] QString filePath() const {return fileInfo.filePath();}
     [[nodiscard]] QString path() const {return fileInfo.path();}
+    [[nodiscard]] bool isDir() const {return fileInfo.fileName().isEmpty();}
 
     void setMetadata(const QString& key, quint32 value) {metadata.insert(key, value);}
     bool getMetadata(const QString& key, quint32& value) const {
@@ -26,7 +27,7 @@ class EntryItem : public QStandardItem {
 
 public:
     explicit EntryItem(const EntryInfo& entryInfo);
-    [[nodiscard]] bool isDir() const {return entryInfo_.fileInfo.isDir();}
+    [[nodiscard]] bool isDir() const {return entryInfo_.isDir();}
 
 protected:
     EntryInfo entryInfo_;

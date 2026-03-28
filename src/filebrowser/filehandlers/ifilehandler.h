@@ -4,6 +4,7 @@
 #include <QVector>
 
 #include "../dat/datutils.h"
+#include "../files/entryitem.h"
 
 class DATFolderEntry;
 class DATFileEntry;
@@ -31,11 +32,12 @@ signals:
 protected:
     const QString signature_ = "SaltyWasHere:)";
     QFileInfo fileInfo_;
-    QList<EntryItem*> entryList_;
     QHash<QString, EntryItem*> pathCache_;
+    QList<EntryItem*> entryList_;
+    QList<EntryInfo> entryInfoList_;
     QList<DATFileEntry*> files_;
     QHash<QString, DATFolderEntry*> pathCacheDELETE_;
-    QList<ParsedFileEntry> parsedEntries_;
+    QList<ParsedFileEntry> parsedEntriesDELETE_;
 
-    void addVirtualPath(QStandardItem* rootItem, const FileEntry &fileEntry);
+    void addVirtualPath(QStandardItem* rootItem, const EntryInfo &entryInfo);
 };

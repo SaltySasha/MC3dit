@@ -4,7 +4,6 @@
 #include <QMessageBox>
 
 #include "../dat/datutils.h"
-#include "../files/entryitem.h"
 
 REGISTER_FILE_HANDLER(DaveLowerFileHandler, QString("Dave"));
 
@@ -212,12 +211,12 @@ auto file = QFile(fileInfo_.absoluteFilePath());
     quint32 entriesBlockSize = toLittleEndian(file.read(4));
 
     QString filePath;
-    if (!parsedEntries_.isEmpty())
-        parsedEntries_.empty();
-    parsedEntries_.reserve(entryCount);
+    if (!entryInfoList_.isEmpty())
+        entryInfoList_.empty();
+    entryInfoList_.reserve(entryCount);
 
     for (quint32 i = 0; i < entryCount; i++) {
-        qint64 currentEntryOffset = 0x800 + i * 0x10;
+        quint32 currentEntryOffset = i * 0x10 + 0x800;
         file.seek(currentEntryOffset);
 
         quint32 nameOffset = toLittleEndian(file.read(4)) + entriesBlockSize + 0x800;
@@ -228,24 +227,14 @@ auto file = QFile(fileInfo_.absoluteFilePath());
 
         file.seek(currentEntryOffset + 4);
 
-        FileEntry newEntry;
-        newEntry.nameOffset = nameOffset;
-        newEntry.fileOffset = toLittleEndian(file.read(4));
-        newEntry.sizeFull = toLittleEndian(file.read(4));
-        newEntry.sizeCompressed = toLittleEndian(file.read(4));
+        EntryInfo newEntryInfo;
+        newEntryInfo.fileInfo = QFileInfo(filePath);
+        newEntryInfo.setMetadata("nameOffset", nameOffset);
+        newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
+        newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
+        newEntryInfo.setMetadata("sizeCompressed", toLittleEndian(file.read(4)));
 
-
-        newEntry.setFile(filePath);
-
-        ParsedFileEntry parsed;
-        parsed.path = filePath;
-        parsed.entry = newEntry;
-        parsed.pathComponents = filePath.split('/', Qt::SkipEmptyParts);
-        if (!parsed.pathComponents.isEmpty()) {
-            parsed.fileName = parsed.pathComponents.last();
-        }
-
-        parsedEntries_.append(parsed);
+        entryInfoList_.append(newEntryInfo);
     }
 
     file.close();
@@ -255,7 +244,7 @@ auto file = QFile(fileInfo_.absoluteFilePath());
 QString DaveLowerFileHandler::readEntryPath(QFile& file, const QString &prevFileName) const {
     QString outName;
     QList<quint32> nameBits;
-    constexpr int MAX_NAME_LENGTH = 512;  // Safety limit
+    quint32 maxNameLength = 512;
     int charCount = 0;
 
     nameBits = unpackSixBitValues(file.read(3));
@@ -266,7 +255,7 @@ QString DaveLowerFileHandler::readEntryPath(QFile& file, const QString &prevFile
     }
     int nextByte = 0;
     while (!nameBits.isEmpty() && nameBits.first() != 0) {
-        if (charCount >= MAX_NAME_LENGTH) {
+        if (charCount >= maxNameLength) {
             qWarning() << "Name length exceeded maximum, truncating";
             break;
         }

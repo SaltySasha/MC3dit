@@ -1,7 +1,6 @@
 ﻿#include "hashhandler.h"
 #include "filehandlerfactory.h"
 
-#include <QDir>
 #include <QDirIterator>
 #include <QMessageBox>
 
@@ -312,25 +311,19 @@ bool HashFileHandler::parseFile() {
     file.seek(8);
 
     for (quint32 i = 0; i < entryCount; i++) {
-        FileEntry newEntry;
-        newEntry.hash = toLittleEndian(file.read(4));
-        newEntry.fileOffset = toLittleEndian(file.read(4));
-        newEntry.sizeFull = toLittleEndian(file.read(4));
-        if (fileNames.contains(newEntry.hash))
-            newEntry.setFile(fileNames[newEntry.hash]);
+        EntryInfo newEntryInfo;
+        newEntryInfo.setMetadata("hash", toLittleEndian(file.read(4)));
+        newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
+        newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
+
+        quint32 newEntryHash = 0;
+        newEntryInfo.getMetadata("hash", newEntryHash);
+        if (fileNames.contains(newEntryHash))
+            newEntryInfo.fileInfo = QFileInfo(fileNames[newEntryHash]);
         else
-            newEntry.setFile("UknownFiles/" + QString::number(newEntry.hash) + ".rsm");
+            newEntryInfo.fileInfo = QFileInfo("UknownFiles/" + QString::number(newEntryHash));
 
-        // Create thread-safe data structure
-        ParsedFileEntry parsed;
-        parsed.path = fileNames[newEntry.hash];
-        parsed.entry = newEntry;
-        parsed.pathComponents = fileNames[newEntry.hash].split('/', Qt::SkipEmptyParts);
-        if (!parsed.pathComponents.isEmpty()) {
-            parsed.fileName = parsed.pathComponents.last();
-        }
-
-        parsedEntries_.append(parsed);
+        entryInfoList_.append(newEntryInfo);
     }
 
     file.close();

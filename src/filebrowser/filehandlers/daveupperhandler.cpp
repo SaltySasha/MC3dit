@@ -98,35 +98,30 @@ auto file = QFile(fileInfo_.absoluteFilePath());
     quint32 entriesBlockSize = toLittleEndian(file.read(4));
 
     QString filePath;
-    parsedEntries_.reserve(entryCount);
+    if (!entryInfoList_.isEmpty())
+        entryInfoList_.empty();
+    entryInfoList_.reserve(entryCount);
 
     for (quint32 i = 0; i < entryCount; i++) {
-        file.seek(i * 0x10 + 0x800);
-        FileEntry newEntry;
-        newEntry.nameOffset = toLittleEndian(file.read(4)) + entriesBlockSize + 0x800;
-        newEntry.fileOffset = toLittleEndian(file.read(4));
-        newEntry.sizeFull = toLittleEndian(file.read(4));
-        newEntry.sizeCompressed = toLittleEndian(file.read(4));
-        file.seek(newEntry.nameOffset);
+        quint32 currentEntryOffset = i * 0x10 + 0x800;
+        file.seek(currentEntryOffset);
 
+        quint32 nameOffset = toLittleEndian(file.read(4)) + entriesBlockSize + 0x800;
+        file.seek(nameOffset);
         filePath = readEntryPath(file);
-
-        // Skip directories
         if (filePath.endsWith("/"))
             continue;
 
-        newEntry.setFile(filePath);
+        file.seek(currentEntryOffset + 4);
 
-        // Create thread-safe data structure
-        ParsedFileEntry parsed;
-        parsed.path = filePath;
-        parsed.entry = newEntry;
-        parsed.pathComponents = filePath.split('/', Qt::SkipEmptyParts);
-        if (!parsed.pathComponents.isEmpty()) {
-            parsed.fileName = parsed.pathComponents.last();
-        }
+        EntryInfo newEntryInfo;
+        newEntryInfo.fileInfo = QFileInfo(filePath);
+        newEntryInfo.setMetadata("nameOffset", nameOffset);
+        newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
+        newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
+        newEntryInfo.setMetadata("sizeCompressed", toLittleEndian(file.read(4)));
 
-        parsedEntries_.append(parsed);
+        entryInfoList_.append(newEntryInfo);
     }
 
     file.close();
