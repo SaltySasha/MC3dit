@@ -13,6 +13,9 @@ FileBrowser::FileBrowser(QWidget *parent)
     : QWidget(parent), ui(new Ui::FileBrowser) {
     ui->setupUi(this);
 
+    for (QString& spinnerChar : spinnerChars_)
+        spinnerIcons_.append(createTextIcon(spinnerChar));
+
     connect(ui->fileTabWidget, &QTabWidget::tabCloseRequested, this, &FileBrowser::tabCloseRequested);
 }
 
@@ -120,8 +123,7 @@ void FileBrowser::toggleTabLoadingIndicator(int tabIndex, bool enabled) {
                 return;
             }
 
-            QString spinnerChar = spinnerChars_[frame % spinnerChars_.size()];
-            ui->fileTabWidget->setTabIcon(tabIndex, createTextIcon(spinnerChar));
+            ui->fileTabWidget->setTabIcon(tabIndex, spinnerIcons_[frame % spinnerIcons_.size()]);
             frame++;
         });
 

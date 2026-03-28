@@ -31,6 +31,7 @@ private:
     QList<QString> spinnerChars_ = {
         "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
     };
+    QList<QIcon> spinnerIcons_;
 
     void toggleTabLoadingIndicator(int tabIndex, bool enabled);
     QIcon createTextIcon(const QString& text);
