@@ -15,6 +15,7 @@ public:
     QString filePath() const {return fileEntry_.filePath();}
     QString path() const {return fileEntry_.path();}
 
+    ~DATFileEntry() override;
 private:
     FileEntry fileEntry_;
 };

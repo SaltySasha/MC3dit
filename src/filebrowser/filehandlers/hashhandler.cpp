@@ -267,11 +267,11 @@ using namespace DATUtils;
 //     return true;
 // }
 
-QVector<ParsedFileEntry> HashFileHandler::parseFile() {
+bool HashFileHandler::parseFile() {
     auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {
         messageFileNotFound(file.fileName(), file.errorString());
-        return parsedEntries_;
+        return false;
     }
 
     file.read(4);
@@ -292,7 +292,7 @@ QVector<ParsedFileEntry> HashFileHandler::parseFile() {
         QFile nameList(":/MC3_PS2_Streams.lst");
         if (!nameList.open(QIODevice::ReadOnly)) {
             messageFileNotFound(file.fileName(), file.errorString());
-            return parsedEntries_;
+            return false;
         }
 
         QTextStream stream(&nameList);
@@ -307,7 +307,7 @@ QVector<ParsedFileEntry> HashFileHandler::parseFile() {
     }
 
     if (fileNames.isEmpty())
-        return parsedEntries_;
+        return false;
 
     file.seek(8);
 
@@ -331,12 +331,10 @@ QVector<ParsedFileEntry> HashFileHandler::parseFile() {
         }
 
         parsedEntries_.append(parsed);
-
-        emit progressChanged(i + 1, entryCount);
     }
 
     file.close();
-    return parsedEntries_;
+    return true;
 }
 
 // bool HashFileHandler::populateModel(QStandardItem* rootItem) {

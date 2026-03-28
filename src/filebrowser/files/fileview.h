@@ -26,7 +26,6 @@ public:
 
 signals:
     void fileLoaded(bool success);
-    void progressChanged(int current, int total);
     // void setProgressBarMax(quint32 newMax);
     // void updateProgressBar(quint32 newValue);
     // void exportFinished();

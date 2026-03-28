@@ -8,7 +8,7 @@ public:
     // explicit DaveLowerFileHandler(const QString& filePath) : DaveFileHandlerBase(filePath) {}
 
 protected:
-    QVector<ParsedFileEntry> parseFile() override;
+   bool parseFile() override;
     QString readEntryPath(QFile& file, const QString &prevFileName) const;
 //     bool validateChars(const QString &filePath) const override;
 //     bool sortFiles( QList<FileEntry> &fileList) const override;

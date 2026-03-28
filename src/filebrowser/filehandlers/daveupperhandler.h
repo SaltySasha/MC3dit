@@ -7,7 +7,7 @@ public:
     // bool populateModel(QStandardItem* rootItem) override;
 
 protected:
-    QVector<ParsedFileEntry> parseFile() override;
+    bool parseFile() override;
     QString readEntryPath(QFile& file) const;
     // bool validateChars(const QString &filePath) const override;
     // bool sortFiles( QList<FileEntry> &fileList) const override;

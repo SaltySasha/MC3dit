@@ -12,30 +12,26 @@ FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent)
     if (!fileHandler_)
         return;
 
-    connect(fileHandler_.get(), &IFileHandler::progressChanged, this, &FileView::progressChanged,
-        Qt::QueuedConnection);
-
     model_ = new QStandardItemModel(this);
-    model_->setHorizontalHeaderLabels({"Name"});
+    model_->setHorizontalHeaderLabels({"Name"}); // TODO: Size
     model_->setSortRole(Qt::UserRole + 1);
+    setSortingEnabled(true);
 
-    QFuture<QVector<ParsedFileEntry>> future = QtConcurrent::run([this]() {
+    QFuture<bool> future = QtConcurrent::run([this]() {
         return fileHandler_->parseFile();
     });
 
-    auto* watcher = new QFutureWatcher<QVector<ParsedFileEntry>>(this);
-    connect(watcher, &QFutureWatcher<QVector<ParsedFileEntry>>::finished, this, [this, watcher]() {
-        QVector<ParsedFileEntry> entries = watcher->result();
-
-        if (entries.isEmpty()) {
-            emit fileLoaded(false);
-        } else {
-            // Now safely populate the model on the main thread
-            bool success = fileHandler_->populateModel(model_->invisibleRootItem());
-            setModel(model_);
-            emit fileLoaded(success);
+    auto* watcher = new QFutureWatcher<bool>(this);
+    connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher]() {
+        bool success = watcher->result();
+        if (success) {
+            bool modelReady = fileHandler_->populateModel(model_->invisibleRootItem());
+            if (modelReady)
+                setModel(model_);
+            success = modelReady;
         }
 
+        emit fileLoaded(success);
         watcher->deleteLater();
     });
 

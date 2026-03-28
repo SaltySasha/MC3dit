@@ -11,7 +11,7 @@ public:
 //     bool packAndExport(const QString &exportDirectoryPath, const QString &sourceDirectoryPath) override;
 //
 protected:
-    QVector<ParsedFileEntry> parseFile() override;
+    bool parseFile() override;
 //     bool validateChars(const QString &filePath) const override;
 //     bool sortFiles( QList<FileEntry> &fileList) const override;
 //     bool prepareFileBlock(const QList<FileEntry> &fileEntries, QList<QByteArray> &fileBytesList) const override;

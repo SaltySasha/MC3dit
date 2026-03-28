@@ -67,8 +67,10 @@ void FileBrowser::dropEvent(QDropEvent *event) {
             continue;
 
         auto* newFileView = new FileView(ui->fileTabWidget, url.toLocalFile());
-        if (!newFileView->isValid())
+        if (!newFileView->isValid()) {
+            newFileView->deleteLater();
             continue;
+        }
 
         QString fileName = QFileInfo(url.toLocalFile()).fileName();
         int newTabIndex = ui->fileTabWidget->addTab(newFileView, fileName);
@@ -146,7 +148,7 @@ QIcon FileBrowser::createTextIcon(const QString &text) {
     painter.setRenderHint(QPainter::Antialiasing);
 
     QFont font = painter.font();
-    font.setPointSize(16);  // Adjust size as needed
+    font.setPointSize(16);
     painter.setFont(font);
 
     painter.setPen(palette().color(QPalette::Accent));

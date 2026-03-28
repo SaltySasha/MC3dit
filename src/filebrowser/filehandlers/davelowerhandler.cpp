@@ -199,11 +199,11 @@ using namespace DATUtils;
 //     return true;
 // }
 
-QVector<ParsedFileEntry> DaveLowerFileHandler::parseFile() {
+bool DaveLowerFileHandler::parseFile() {
 auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {
         messageFileNotFound(file.fileName(), file.errorString());
-        return parsedEntries_;
+        return false;
     }
 
     file.read(4);
@@ -211,21 +211,28 @@ auto file = QFile(fileInfo_.absoluteFilePath());
     quint32 entriesBlockSize = toLittleEndian(file.read(4));
 
     QString filePath;
-    parsedEntries_.reserve(entryCount); // Pre-allocate for efficiency
+    if (!parsedEntries_.isEmpty())
+        parsedEntries_.empty();
+    parsedEntries_.reserve(entryCount);
 
     for (quint32 i = 0; i < entryCount; i++) {
-        file.seek(0x800 + i * 0x10);
+        qint64 currentEntryOffset = 0x800 + i * 0x10;
+        file.seek(currentEntryOffset);
+
+        quint32 nameOffset = toLittleEndian(file.read(4)) + entriesBlockSize + 0x800;
+        file.seek(nameOffset);
+        filePath = readEntryPath(file, filePath);
+        if (filePath.endsWith("/"))
+            continue;
+
+        file.seek(currentEntryOffset + 4);
+
         FileEntry newEntry;
-        newEntry.nameOffset = toLittleEndian(file.read(4)) + entriesBlockSize + 0x800;
+        newEntry.nameOffset = nameOffset;
         newEntry.fileOffset = toLittleEndian(file.read(4));
         newEntry.sizeFull = toLittleEndian(file.read(4));
         newEntry.sizeCompressed = toLittleEndian(file.read(4));
-        file.seek(newEntry.nameOffset);
 
-        filePath = readEntryPath(file, filePath);
-
-        if (filePath.endsWith("/"))
-            continue;
 
         newEntry.setFile(filePath);
 
@@ -238,12 +245,10 @@ auto file = QFile(fileInfo_.absoluteFilePath());
         }
 
         parsedEntries_.append(parsed);
-
-        emit progressChanged(i + 1, entryCount);
     }
 
     file.close();
-    return parsedEntries_;
+    return true;
 }
 
 QString DaveLowerFileHandler::readEntryPath(QFile& file, const QString &prevFileName) const {

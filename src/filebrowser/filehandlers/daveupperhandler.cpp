@@ -86,11 +86,11 @@ using namespace DATUtils;
 //     return true;
 // }
 
-QVector<ParsedFileEntry> DaveUpperFileHandler::parseFile() {
+bool DaveUpperFileHandler::parseFile() {
 auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {
         qWarning() << "Failed to open file:" << file.errorString();
-        return parsedEntries_;
+        return false;
     }
 
     file.read(4);
@@ -98,10 +98,10 @@ auto file = QFile(fileInfo_.absoluteFilePath());
     quint32 entriesBlockSize = toLittleEndian(file.read(4));
 
     QString filePath;
-    parsedEntries_.reserve(entryCount); // Pre-allocate for efficiency
+    parsedEntries_.reserve(entryCount);
 
     for (quint32 i = 0; i < entryCount; i++) {
-        file.seek(0x800 + i * 0x10);
+        file.seek(i * 0x10 + 0x800);
         FileEntry newEntry;
         newEntry.nameOffset = toLittleEndian(file.read(4)) + entriesBlockSize + 0x800;
         newEntry.fileOffset = toLittleEndian(file.read(4));
@@ -127,12 +127,10 @@ auto file = QFile(fileInfo_.absoluteFilePath());
         }
 
         parsedEntries_.append(parsed);
-
-        emit progressChanged(i + 1, entryCount);
     }
 
     file.close();
-    return parsedEntries_;
+    return true;
 }
 
 QString DaveUpperFileHandler::readEntryPath(QFile& file) const {
