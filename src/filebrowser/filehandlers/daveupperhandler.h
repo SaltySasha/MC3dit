@@ -4,9 +4,10 @@
 
 class DaveUpperFileHandler : public IFileHandler {
 public:
+    bool parseFile() override;
+    bool exportFiles(const QString &exportDirectory) override;
 
 protected:
-    bool parseFile() override;
     QString readEntryPath(QFile& file) const;
     // bool validateChars(const QString &filePath) const override;
     // bool sortFiles( QList<FileEntry> &fileList) const override;

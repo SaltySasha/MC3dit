@@ -1,19 +1,20 @@
 ﻿#include "fileview.h"
 #include <QAbstractFileIconProvider>
 #include <QFileDialog>
+#include <QMessageBox>
 #include <QtConcurrent>
 
 #include "../dat/datefileentry.h"
 #include "../filehandlers/filehandlerfactory.h"
 #include "../filehandlers/ifilehandler.h"
 
-FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent) {
+FileView::FileView(const QString &filePath, QWidget *parent) : QTreeView(parent) {
     fileHandler_ = FileHandleFactory::instance().createHandler(filePath, this);
-    if (!fileHandler_)
-        return;
+}
 
+void FileView::loadFile() {
     QString directory = fileHandler_->getFileInfo().path() + "/" + fileHandler_->getFileInfo().baseName();
-    unpackDirectory_ = directory;
+    exportDirectory_ = directory;
     packDirectory_ = directory;
 
     setSortingEnabled(true);
@@ -36,11 +37,29 @@ FileView::FileView(QWidget *parent, const QString& filePath) : QTreeView(parent)
 
             fileHandler_->populateModel(model_->invisibleRootItem());
         }
+        else
+            emit fileLoaded(false);
 
         parseWatcher->deleteLater();
     });
 
     parseWatcher->setFuture(parseFuture);
+}
+
+void FileView::exportFiles() {
+    QFuture<bool> exportFuture = QtConcurrent::run([this]() {
+       return fileHandler_->exportFiles(exportDirectory_);
+    });
+
+    auto* exportWatcher = new QFutureWatcher<bool>(this);
+    connect(exportWatcher, &QFutureWatcher<bool>::finished, this, [this, exportWatcher]() {
+        if (exportWatcher->result())
+            // QMessageBox::information(this, "Export Complete", QString("Exported %1 files to %2.").arg(model_->rowCount()).arg(exportDirectory_));
+
+        emit filesExported(exportWatcher->result());
+        exportWatcher->deleteLater();
+    });
+    exportWatcher->setFuture(exportFuture);
 }
 
 // FileView * FileView::create(const QString &filePath) {

@@ -1,4 +1,7 @@
 ﻿#include "daveupperhandler.h"
+
+#include <QDir>
+
 #include "filehandlerfactory.h"
 
 #include <QMessageBox>
@@ -85,6 +88,33 @@ using namespace DATUtils;
 //     // emit readFinished(true);
 //     return true;
 // }
+
+bool DaveUpperFileHandler::exportFiles(const QString &exportDirectory) {
+    auto file = QFile(fileInfo_.absoluteFilePath());
+    if (!file.open(QIODeviceBase::ReadOnly)) {
+        messageFileNotFound(file.fileName(), file.errorString());
+        return false;
+    }
+
+    quint32 fileNumber = 1;
+    for (const EntryInfo& entryInfo : entryInfoList_) {
+        file.seek(entryInfo.getMetadata("fileOffset"));
+        QByteArray fileData = file.read(entryInfo.getMetadata("sizeCompressed"));
+        QString filePath = exportDirectory + "/";
+        QFile newFile(filePath + entryInfo.filePath());
+
+        QDir directory;
+        if (directory.mkpath(filePath + entryInfo.path()) && newFile.open(QIODevice::WriteOnly)) {
+            newFile.write(fileData);
+            newFile.close();
+        }
+
+        fileNumber++;
+    }
+
+    file.close();
+    return true;
+}
 
 bool DaveUpperFileHandler::parseFile() {
 auto file = QFile(fileInfo_.absoluteFilePath());

@@ -1,7 +1,11 @@
 ﻿#include "davelowerhandler.h"
+
+#include <QDir>
+
 #include "filehandlerfactory.h"
 
 #include <QMessageBox>
+#include <QtZlib/zlib.h>
 
 #include "../dat/datutils.h"
 
@@ -162,8 +166,37 @@ using namespace DATUtils;
 //     return getIntAsBytes(compName, byteSize);
 // }
 
+bool DaveLowerFileHandler::exportFiles(const QString &exportDirectory) {
+    auto file = QFile(fileInfo_.absoluteFilePath());
+    if (!file.open(QIODeviceBase::ReadOnly)) {
+        messageFileNotFound(file.fileName(), file.errorString());
+        return false;
+    }
+
+    quint32 fileNumber = 1;
+    for (const EntryInfo& entryInfo : entryInfoList_) {
+        file.seek(entryInfo.getMetadata("fileOffset"));
+        QByteArray fileData = file.read(entryInfo.getMetadata("sizeCompressed"));
+        if (entryInfo.getMetadata("sizeFull") != entryInfo.getMetadata("sizeCompressed"))
+            fileData = decompressFile(fileData, entryInfo.getMetadata("sizeFull"));
+        QString filePath = exportDirectory + "/";
+        QFile newFile(filePath + entryInfo.filePath());
+
+        QDir directory;
+        if (directory.mkpath(filePath + entryInfo.path()) && newFile.open(QIODevice::WriteOnly)) {
+            newFile.write(fileData);
+            newFile.close();
+        }
+
+        fileNumber++;
+    }
+
+    file.close();
+    return true;
+}
+
 bool DaveLowerFileHandler::parseFile() {
-auto file = QFile(fileInfo_.absoluteFilePath());
+    auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {
         messageFileNotFound(file.fileName(), file.errorString());
         return false;
@@ -241,4 +274,28 @@ QString DaveLowerFileHandler::readEntryPath(QFile& file, const QString &prevFile
     }
 
     return outName;
+}
+
+QByteArray DaveLowerFileHandler::decompressFile(const QByteArray &fileFata, const quint32 decompressedSize) const {
+    QByteArray outBytes;
+    outBytes.resize(decompressedSize);
+
+    z_stream zStream = {};
+    zStream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(fileFata.data()));
+    zStream.avail_in = fileFata.size();
+    zStream.next_out = reinterpret_cast<Bytef*>(outBytes.data());
+    zStream.avail_out = outBytes.size();
+
+    // -15 = raw deflate
+    if (inflateInit2(&zStream, -15) != Z_OK)
+        return {};
+
+    if (inflate(&zStream, Z_FINISH) != Z_STREAM_END) {
+        inflateEnd(&zStream);
+        return {};
+    }
+
+    outBytes.resize(zStream.total_out);
+    inflateEnd(&zStream);
+    return outBytes;
 }

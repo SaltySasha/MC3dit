@@ -10,36 +10,33 @@ REGISTER_FILE_HANDLER(HashFileHandler, QString("Hash"));
 
 using namespace DATUtils;
 
-// bool HashFileHandler::unpackAndExport(const QString &exportDirectory) {
-//     if (!file_.open(QIODeviceBase::ReadOnly)) {
-//         messageFileNotFound(file_.fileName(), file_.errorString());
-//         return false;
-//     }
-//
-//     emit setProgressBarMax(files_.length());
-//
-//     quint32 fileNumber = 1;
-//     for (const DATFileEntry *file : files_) {
-//         file_.seek(file->fileOffset());
-//         QByteArray fileData = file_.read(file->sizeFull());
-//         QString filePath = exportDirectory + "/" + baseName() + "/";
-//         QFile newFile(filePath + file->filePath());
-//
-//         QDir directory;
-//         if (directory.mkpath(filePath + file->path()) && newFile.open(QIODevice::WriteOnly)) {
-//             newFile.write(fileData);
-//             newFile.close();
-//         }
-//
-//         emit updateProgressBar(fileNumber);
-//         fileNumber++;
-//     }
-//
-//     file_.close();
-//     emit exportFinished();
-//     return true;
-// }
-//
+bool HashFileHandler::exportFiles(const QString &exportDirectory) {
+    auto file = QFile(fileInfo_.absoluteFilePath());
+    if (!file.open(QIODeviceBase::ReadOnly)) {
+        messageFileNotFound(file.fileName(), file.errorString());
+        return false;
+    }
+
+    quint32 fileNumber = 1;
+    for (const EntryInfo& entryInfo : entryInfoList_) {
+        file.seek(entryInfo.getMetadata("fileOffset"));
+        QByteArray fileData = file.read(entryInfo.getMetadata("sizeFull"));
+        QString filePath = exportDirectory + "/";
+        QFile newFile(filePath + entryInfo.filePath());
+
+        QDir directory;
+        if (directory.mkpath(filePath + entryInfo.path()) && newFile.open(QIODevice::WriteOnly)) {
+            newFile.write(fileData);
+            newFile.close();
+        }
+
+        fileNumber++;
+    }
+
+    file.close();
+    return true;
+}
+
 // // TODO: Needs cleaning up and speed improvements
 // bool HashFileHandler::packAndExport(const QString &exportDirectoryPath, const QString &sourceDirectoryPath) {
 //     QDir sourceDirectory(sourceDirectoryPath);
@@ -238,33 +235,33 @@ using namespace DATUtils;
 //     initItemModel(true);
 //     return true;
 // }
-//
-// bool HashFileHandler::validateChars(const QString &filePath) const {
-//     for (const QChar& c : filePath) {
-//         if (c.unicode() > 127) {
-//             QMessageBox::critical(nullptr, "Error",
-//                 QString("Non-ASCII character '%1' in filename: %2").arg(c, filePath));
-//             return false;
-//         }
-//     }
-//
-//     return true;
-// }
-//
-// bool HashFileHandler::sortFiles(QList<FileEntry> &fileList) const {
-//     std::ranges::sort(fileList, [](const FileEntry& a, const FileEntry& b) {
-//         return a.hash < b.hash;
-//     });
-//
-//     return true;
-// }
-//
-// bool HashFileHandler::prepareFileBlock(const QList<FileEntry> &fileEntries, QList<QByteArray> &fileBytesList) const {
-//     for (const FileEntry& entry : fileEntries)
-//         fileBytesList.append(entry.relativePath.toUtf8() + '\0');
-//
-//     return true;
-// }
+
+bool HashFileHandler::validateChars(const QString &filePath) const {
+    for (const QChar& c : filePath) {
+        if (c.unicode() > 127) {
+            QMessageBox::critical(nullptr, "Error",
+                QString("Non-ASCII character '%1' in filename: %2").arg(c, filePath));
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool HashFileHandler::sortFiles(QList<FileEntry> &fileList) const {
+    std::ranges::sort(fileList, [](const FileEntry& a, const FileEntry& b) {
+        return a.hash < b.hash;
+    });
+
+    return true;
+}
+
+bool HashFileHandler::prepareFileBlock(const QList<FileEntry> &fileEntries, QList<QByteArray> &fileBytesList) const {
+    for (const FileEntry& entry : fileEntries)
+        fileBytesList.append(entry.relativePath.toUtf8() + '\0');
+
+    return true;
+}
 
 bool HashFileHandler::parseFile() {
     auto file = QFile(fileInfo_.absoluteFilePath());
@@ -316,8 +313,7 @@ bool HashFileHandler::parseFile() {
         newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
         newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
 
-        quint32 newEntryHash = 0;
-        newEntryInfo.getMetadata("hash", newEntryHash);
+        quint32 newEntryHash = newEntryInfo.getMetadata("hash");
         if (fileNames.contains(newEntryHash))
             newEntryInfo.fileInfo = QFileInfo(fileNames[newEntryHash]);
         else

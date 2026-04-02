@@ -12,11 +12,11 @@ struct EntryInfo {
     [[nodiscard]] bool isDir() const {return fileInfo.fileName().isEmpty();}
 
     void setMetadata(const QString& key, quint32 value) {metadata.insert(key, value);}
-    bool getMetadata(const QString& key, quint32& value) const {
-        if (!metadata.contains(key))
-            return false;
-        value = metadata.value(key);
-        return true;
+    quint32 getMetadata(const QString& key) const {
+        if (metadata.contains(key))
+            return metadata.value(key);
+
+        return 0;
     }
 
     QFileInfo fileInfo;

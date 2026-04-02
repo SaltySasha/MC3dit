@@ -17,11 +17,22 @@ FileBrowser::FileBrowser(QWidget *parent)
         spinnerIcons_.append(createTextIcon(spinnerChar));
 
     connect(ui->fileTabWidget, &QTabWidget::tabCloseRequested, this, &FileBrowser::tabCloseRequested);
-    connect(ui->fileTabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+    connect(ui->fileTabWidget, &QTabWidget::currentChanged, this, [this] {
         setLineEditTexts();
     });
     connect(ui->packLineEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
-        ui->packButton->setEnabled(QFileInfo(text).isDir());
+        ui->packButton->setEnabled(canPack());
+    });
+    connect(ui->exportButton, &QPushButton::clicked, this, [this] {
+        auto* fileView = dynamic_cast<FileView*>(ui->fileTabWidget->currentWidget());
+        if (fileView) {
+            toggleTabLoadingIndicator(ui->fileTabWidget->currentIndex(), true);
+            connect(fileView, &FileView::filesExported, this, [this] {
+                toggleTabLoadingIndicator(ui->fileTabWidget->currentIndex(), false);
+                ui->packButton->setEnabled(canPack());
+            });
+            fileView->exportFiles();
+        }
     });
 }
 
@@ -75,7 +86,7 @@ void FileBrowser::dropEvent(QDropEvent *event) {
         if (tabExists(url.toLocalFile(), true))
             continue;
 
-        auto* newFileView = new FileView(ui->fileTabWidget, url.toLocalFile());
+        auto* newFileView = new FileView(url.toLocalFile(), ui->fileTabWidget);
         if (!newFileView->isValid()) {
             newFileView->deleteLater();
             continue;
@@ -97,6 +108,8 @@ void FileBrowser::dropEvent(QDropEvent *event) {
                 ui->fileTabWidget->removeTab(newTabIndex);
             }
         });
+
+        newFileView->loadFile();
     }
 }
 
@@ -134,6 +147,7 @@ void FileBrowser::toggleTabLoadingIndicator(quint32 tabIndex, bool enabled) {
         });
 
         timer->start(60);
+        ui->exportButton->setEnabled(false);
     }
     else {
         if (loadingTimers_.contains(tabIndex)) {
@@ -142,6 +156,7 @@ void FileBrowser::toggleTabLoadingIndicator(quint32 tabIndex, bool enabled) {
             loadingTimers_.remove(tabIndex);
 
             ui->fileTabWidget->setTabIcon(tabIndex, QIcon());
+            ui->exportButton->setEnabled(true);
         }
     }
 
@@ -174,12 +189,21 @@ void FileBrowser::toggleTabCloseButton(quint32 tabIndex, bool enabled) {
 
 void FileBrowser::setLineEditTexts() {
     auto* fileView = dynamic_cast<FileView*>(ui->fileTabWidget->currentWidget());
-    if (fileView && !loadingTimers_.contains(ui->fileTabWidget->currentIndex())) {
-        ui->unpackLineEdit->setText(fileView->unpackDirectory());
+    if (fileView) {
+        ui->exportLineEdit->setText(fileView->exportDirectory());
         ui->packLineEdit->setText(fileView->packDirectory());
     }
     else {
-        ui->unpackLineEdit->clear();
+        ui->exportLineEdit->clear();
         ui->packLineEdit->clear();
     }
+
+    bool enableExport = !ui->exportLineEdit->text().isEmpty() && !loadingTimers_.contains(ui->fileTabWidget->currentIndex());
+    ui->exportButton->setEnabled(enableExport);
+    ui->packButton->setEnabled(canPack());
+}
+
+bool FileBrowser::canPack() const {
+    QString packText = ui->packLineEdit->text();
+    return QFileInfo(packText).isDir() && !loadingTimers_.contains(ui->fileTabWidget->currentIndex());
 }

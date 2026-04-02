@@ -36,7 +36,6 @@ void IFileHandler::addVirtualPath(QStandardItem *rootItem, const EntryInfo &entr
 }
 
 void IFileHandler::populateModel(QStandardItem* rootItem) {
-    // Process in batches of 100 items
     const int batchSize = 100;
     int currentIndex = 0;
 

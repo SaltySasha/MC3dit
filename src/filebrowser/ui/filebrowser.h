@@ -37,4 +37,5 @@ protected:
     QIcon createTextIcon(const QString& text);
     void toggleTabCloseButton(quint32 tabIndex, bool enabled);
     void setLineEditTexts();
+    bool canPack() const;
 };

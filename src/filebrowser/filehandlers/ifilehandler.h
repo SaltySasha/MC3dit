@@ -11,6 +11,7 @@ class IFileHandler : public QObject {
 
 public:
     virtual bool parseFile() = 0;
+    virtual bool exportFiles(const QString& exportDirectory){return false;}; // TODO: FIX THIS
     virtual void populateModel(QStandardItem* rootItem);
 
     void setFileInfo(const QFileInfo &fileInfo) {fileInfo_ = fileInfo;}
