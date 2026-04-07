@@ -4,8 +4,6 @@
 #include <QDirIterator>
 #include <QMessageBox>
 
-#include "../dat/datefileentry.h"
-
 REGISTER_FILE_HANDLER(HashFileHandler, QString("Hash"));
 
 using namespace DATUtils;

@@ -2,9 +2,6 @@
 
 #include <QTimer>
 
-#include "../dat/datefileentry.h"
-#include "../dat/datfolderentry.h"
-
 void IFileHandler::addVirtualPath(QStandardItem *rootItem, const EntryInfo &entryInfo) {
     const QString virtualPath = entryInfo.fileInfo.filePath();
     QStringList pathParts = virtualPath.split("/", Qt::SkipEmptyParts);

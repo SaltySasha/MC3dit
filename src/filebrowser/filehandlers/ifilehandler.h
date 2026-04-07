@@ -12,7 +12,7 @@ class IFileHandler : public QObject {
 public:
     virtual bool parseFile() = 0;
     virtual bool exportFiles(const QString& exportDirectory) = 0;
-    virtual bool packFiles(const QString& packDirectory, const QString& sourceDirectory) {return false;}; //TODO: FIX THIS
+    virtual bool packFiles(const QString& packDirectory, const QString& sourceDirectory) = 0;
     virtual void populateModel(QStandardItem* rootItem);
 
     void setFileInfo(const QFileInfo &fileInfo) {fileInfo_ = fileInfo;}

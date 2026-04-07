@@ -6,7 +6,6 @@
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include "../dat/datutils.h"
-#include "../dat/datefileentry.h"
 
 using namespace DATUtils;
 

@@ -4,7 +4,6 @@
 #include <QMessageBox>
 #include <QtConcurrent>
 
-#include "../dat/datefileentry.h"
 #include "../filehandlers/filehandlerfactory.h"
 #include "../filehandlers/ifilehandler.h"
 

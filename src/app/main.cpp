@@ -47,11 +47,8 @@ int main(int argc, char *argv[]) {
 
     app.setWindowIcon(QIcon(":/icon"));
 
-    // MainWindow mainWindow;
-    // mainWindow.show();
-
-    FileBrowser fileBrowser;
-    fileBrowser.show();
+    MainWindow mainWindow;
+    mainWindow.show();
 
     // Otherwise, start listening for future launches
     QObject::connect(&server, &QLocalServer::newConnection, [&]() {
