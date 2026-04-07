@@ -20,7 +20,7 @@ FileBrowser::FileBrowser(QWidget *parent)
     connect(ui->fileTabWidget, &QTabWidget::currentChanged, this, [this] {
         setLineEditTexts();
     });
-    connect(ui->packLineEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
+    connect(ui->packLineEdit, &QLineEdit::textChanged, this, [this] {
         ui->packButton->setEnabled(canPack());
     });
     connect(ui->exportButton, &QPushButton::clicked, this, [this] {
@@ -32,6 +32,17 @@ FileBrowser::FileBrowser(QWidget *parent)
                 ui->packButton->setEnabled(canPack());
             });
             fileView->exportFiles();
+        }
+    });
+    connect(ui->packButton, &QPushButton::clicked, this, [this] {
+        auto* fileView = dynamic_cast<FileView*>(ui->fileTabWidget->currentWidget());
+        if (fileView) {
+            toggleTabLoadingIndicator(ui->fileTabWidget->currentIndex(), true);
+            connect(fileView, &FileView::filesPacked, this, [this] {
+                toggleTabLoadingIndicator(ui->fileTabWidget->currentIndex(), false);
+                ui->packButton->setEnabled(canPack());
+            });
+            fileView->packFiles();
         }
     });
 }

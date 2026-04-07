@@ -53,13 +53,25 @@ void FileView::exportFiles() {
 
     auto* exportWatcher = new QFutureWatcher<bool>(this);
     connect(exportWatcher, &QFutureWatcher<bool>::finished, this, [this, exportWatcher]() {
-        if (exportWatcher->result())
-            // QMessageBox::information(this, "Export Complete", QString("Exported %1 files to %2.").arg(model_->rowCount()).arg(exportDirectory_));
-
         emit filesExported(exportWatcher->result());
         exportWatcher->deleteLater();
+        if (!exportWatcher->result())
+            QMessageBox::warning(this, "Export Failed", "Export failed. Check for missing DAT file.");
     });
     exportWatcher->setFuture(exportFuture);
+}
+
+void FileView::packFiles() {
+    QFuture<bool> packFuture = QtConcurrent::run([this]() {
+        return fileHandler_->packFiles(packDirectory_, packDirectory_);
+    });
+
+    auto* packWatcher = new QFutureWatcher<bool>(this);
+    connect(packWatcher, &QFutureWatcher<bool>::finished, this, [this, packWatcher]() {
+        emit filesPacked(packWatcher->result());
+        packWatcher->deleteLater();
+        });
+    packWatcher->setFuture(packFuture);
 }
 
 // FileView * FileView::create(const QString &filePath) {

@@ -11,7 +11,8 @@ class IFileHandler : public QObject {
 
 public:
     virtual bool parseFile() = 0;
-    virtual bool exportFiles(const QString& exportDirectory){return false;}; // TODO: FIX THIS
+    virtual bool exportFiles(const QString& exportDirectory) = 0;
+    virtual bool packFiles(const QString& packDirectory, const QString& sourceDirectory) {return false;}; //TODO: FIX THIS
     virtual void populateModel(QStandardItem* rootItem);
 
     void setFileInfo(const QFileInfo &fileInfo) {fileInfo_ = fileInfo;}
@@ -23,6 +24,7 @@ signals:
 
 protected:
     const QString signature_ = "SaltyWasHere:)";
+    QString fileMagic_ = "";
     QFileInfo fileInfo_;
     QHash<QString, EntryItem*> pathCache_;
     QList<EntryInfo> entryInfoList_;

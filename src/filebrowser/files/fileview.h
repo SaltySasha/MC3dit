@@ -14,6 +14,7 @@ public:
     explicit FileView(const QString &filePath, QWidget *parent = nullptr);
     void loadFile();
     void exportFiles();
+    void packFiles();
     [[nodiscard]] bool isValid() const {return fileHandler_ != nullptr;}
     [[nodiscard]] QString exportDirectory() const {return exportDirectory_;}
     [[nodiscard]] QString packDirectory() const {return packDirectory_;}
@@ -29,6 +30,7 @@ public:
 signals:
     void fileLoaded(bool success);
     void filesExported(bool success);
+    void filesPacked(bool success);
     // void setProgressBarMax(quint32 newMax);
     // void updateProgressBar(quint32 newValue);
     // void exportFinished();

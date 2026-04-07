@@ -6,7 +6,7 @@ class HashFileHandler : public IFileHandler {
 public:
      bool parseFile() override;
      bool exportFiles(const QString& exportDirectory) override;
-     // bool packAndExport(const QString &exportDirectoryPath, const QString &sourceDirectoryPath);
+     bool packFiles(const QString &exportDirectoryPath, const QString &sourceDirectoryPath) override;
 
 protected:
      bool sortFiles( QList<FileEntry> &fileList) const;
