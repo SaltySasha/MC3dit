@@ -16,8 +16,6 @@ void FileView::loadFile() {
     exportDirectory_ = directory;
     packDirectory_ = directory;
 
-    setSortingEnabled(true);
-
     QFuture<bool> parseFuture = QtConcurrent::run([this]() {
         return fileHandler_->parseFile();
     });
@@ -31,6 +29,7 @@ void FileView::loadFile() {
 
             connect(fileHandler_, &IFileHandler::populationFinished, this, [this]() {
                 setModel(model_);
+                model()->sort(0, Qt::DescendingOrder);
                 emit fileLoaded(model_->rowCount() > 0);
             });
 

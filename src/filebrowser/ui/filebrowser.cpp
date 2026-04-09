@@ -103,7 +103,7 @@ void FileBrowser::dropEvent(QDropEvent *event) {
             continue;
         }
 
-        QString fileName = QFileInfo(url.toLocalFile()).fileName();
+        QString fileName = QFileInfo(url.toLocalFile()).baseName();
         int newTabIndex = ui->fileTabWidget->addTab(newFileView, fileName);
         toggleTabLoadingIndicator(newTabIndex, true);
         ui->fileTabWidget->setCurrentIndex(newTabIndex);
@@ -115,8 +115,8 @@ void FileBrowser::dropEvent(QDropEvent *event) {
 
             if (!success) {
                 QMessageBox::warning(this, "Couldn't Load File", QString("Unable to load file:\n%1").arg(url.toLocalFile()));
-                newFileView->deleteLater();
                 ui->fileTabWidget->removeTab(newTabIndex);
+                newFileView->deleteLater();
             }
         });
 
@@ -125,8 +125,10 @@ void FileBrowser::dropEvent(QDropEvent *event) {
 }
 
 void FileBrowser::tabCloseRequested(quint32 index) {
-    ui->fileTabWidget->widget(index)->deleteLater();
+    QWidget* tabWidget = ui->fileTabWidget->widget(index);
     ui->fileTabWidget->removeTab(index);
+    if (tabWidget)
+        tabWidget->deleteLater();
 }
 
 bool FileBrowser::tabExists(const QString &filePath, bool setCurrent) const {

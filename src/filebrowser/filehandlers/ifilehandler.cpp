@@ -33,7 +33,7 @@ void IFileHandler::addVirtualPath(QStandardItem *rootItem, const EntryInfo &entr
 }
 
 void IFileHandler::populateModel(QStandardItem* rootItem) {
-    const int batchSize = 100;
+    const int batchSize = 200;
     int currentIndex = 0;
 
     auto* timer = new QTimer(this);

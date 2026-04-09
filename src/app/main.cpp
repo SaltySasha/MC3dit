@@ -35,15 +35,15 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
     QStringList args = app.arguments();
-    if (sendMessageToRunningInstance(args))
-        return 0;
+    // if (sendMessageToRunningInstance(args))
+    //     return 0;
 
     // Remove stale socket if needed
-    QLocalServer::removeServer(APP_SERVER_NAME);
-    QLocalServer server;
-    if (!server.listen(APP_SERVER_NAME)) {
-        qWarning() << "Failed to listen on server:" << server.errorString();
-    }
+    // QLocalServer::removeServer(APP_SERVER_NAME);
+    // QLocalServer server;
+    // if (!server.listen(APP_SERVER_NAME)) {
+    //     qWarning() << "Failed to listen on server:" << server.errorString();
+    // }
 
     app.setWindowIcon(QIcon(":/icon"));
 
@@ -51,21 +51,21 @@ int main(int argc, char *argv[]) {
     mainWindow.show();
 
     // Otherwise, start listening for future launches
-    QObject::connect(&server, &QLocalServer::newConnection, [&]() {
-        QLocalSocket *client = server.nextPendingConnection();
-        if (client->waitForReadyRead(500)) {
-            QString message = QString::fromUtf8(client->readAll());
-            QStringList paths = message.split('\n', Qt::SkipEmptyParts);
-
-            for (QString& path : paths)
-                continue;
-                // mainWindow.tryOpenFile(path);
-        }
-        client->deleteLater();
-    });
-
-    for (QString& arg : app.arguments())
-        continue;
+    // QObject::connect(&server, &QLocalServer::newConnection, [&]() {
+    //     QLocalSocket *client = server.nextPendingConnection();
+    //     if (client->waitForReadyRead(500)) {
+    //         QString message = QString::fromUtf8(client->readAll());
+    //         QStringList paths = message.split('\n', Qt::SkipEmptyParts);
+    //
+    //         for (QString& path : paths)
+    //             continue;
+    //             // mainWindow.tryOpenFile(path);
+    //     }
+    //     client->deleteLater();
+    // });
+    //
+    // for (QString& arg : app.arguments())
+        // continue;
         // mainWindow.tryOpenFile(arg);
 
     return QApplication::exec();

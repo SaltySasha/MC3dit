@@ -316,7 +316,7 @@ auto file = QFile(fileInfo_.absoluteFilePath());
 
     QString filePath;
     if (!entryInfoList_.isEmpty())
-        entryInfoList_.empty();
+        entryInfoList_.clear();
     entryInfoList_.reserve(entryCount);
 
     for (quint32 i = 0; i < entryCount; i++) {
