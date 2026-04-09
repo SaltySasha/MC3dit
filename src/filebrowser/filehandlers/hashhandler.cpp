@@ -16,8 +16,10 @@ bool HashFileHandler::exportFiles(const QString &exportDirectory) {
 
     quint32 fileNumber = 1;
     for (const EntryInfo& entryInfo : entryInfoList_) {
-        file.seek(entryInfo.getMetadata("fileOffset"));
-        QByteArray fileData = file.read(entryInfo.getMetadata("sizeFull"));
+        // file.seek(entryInfo.getMetadata("fileOffset"));
+        // QByteArray fileData = file.read(entryInfo.getMetadata("sizeFull"));
+        file.seek(entryInfo.fileOffset);
+        QByteArray fileData = file.read(entryInfo.sizeFull);
         QString filePath = exportDirectory + "/";
         QFile newFile(filePath + entryInfo.filePath());
 
@@ -301,11 +303,15 @@ bool HashFileHandler::parseFile() {
 
     for (quint32 i = 0; i < entryCount; i++) {
         EntryInfo newEntryInfo;
-        newEntryInfo.setMetadata("hash", toLittleEndian(file.read(4)));
-        newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
-        newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
+        // newEntryInfo.setMetadata("hash", toLittleEndian(file.read(4)));
+        // newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
+        // newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
+        newEntryInfo.hash = toLittleEndian(file.read(4));
+        newEntryInfo.fileOffset = toLittleEndian(file.read(4));
+        newEntryInfo.sizeFull = toLittleEndian(file.read(4));
 
-        quint32 newEntryHash = newEntryInfo.getMetadata("hash");
+        // quint32 newEntryHash = newEntryInfo.getMetadata("hash");
+        quint32 newEntryHash = newEntryInfo.hash;
         if (fileNames.contains(newEntryHash))
             newEntryInfo.fileInfo = QFileInfo(fileNames[newEntryHash]);
         else

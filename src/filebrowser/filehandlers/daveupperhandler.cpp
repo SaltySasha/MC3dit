@@ -111,8 +111,8 @@ bool DaveUpperFileHandler::exportFiles(const QString &exportDirectory) {
 
     quint32 fileNumber = 1;
     for (const EntryInfo& entryInfo : entryInfoList_) {
-        file.seek(entryInfo.getMetadata("fileOffset"));
-        QByteArray fileData = file.read(entryInfo.getMetadata("sizeCompressed"));
+        file.seek(entryInfo.fileOffset);
+        QByteArray fileData = file.read(entryInfo.sizeCompressed);
         QString filePath = exportDirectory + "/";
         QFile newFile(filePath + entryInfo.filePath());
 
@@ -333,10 +333,10 @@ auto file = QFile(fileInfo_.absoluteFilePath());
 
         EntryInfo newEntryInfo;
         newEntryInfo.fileInfo = QFileInfo(filePath);
-        newEntryInfo.setMetadata("nameOffset", nameOffset);
-        newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
-        newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
-        newEntryInfo.setMetadata("sizeCompressed", toLittleEndian(file.read(4)));
+        newEntryInfo.nameOffset = nameOffset;
+        newEntryInfo.fileOffset = toLittleEndian(file.read(4));
+        newEntryInfo.sizeFull = toLittleEndian(file.read(4));
+        newEntryInfo.sizeCompressed = toLittleEndian(file.read(4));
 
         entryInfoList_.append(newEntryInfo);
     }

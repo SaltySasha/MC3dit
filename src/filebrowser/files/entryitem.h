@@ -11,16 +11,12 @@ struct EntryInfo {
     [[nodiscard]] QString path() const {return fileInfo.path();}
     [[nodiscard]] bool isDir() const {return fileInfo.fileName().isEmpty();}
 
-    void setMetadata(const QString& key, quint32 value) {metadata.insert(key, value);}
-    quint32 getMetadata(const QString& key) const {
-        if (metadata.contains(key))
-            return metadata.value(key);
-
-        return 0;
-    }
-
     QFileInfo fileInfo;
-    QHash<QString, quint32> metadata;
+    quint32 hash = 0;
+    quint32 nameOffset = 0;
+    quint32 fileOffset = 0;
+    quint32 sizeFull = 0;
+    quint32 sizeCompressed = 0;
 };
 
 class EntryItem : public QStandardItem {

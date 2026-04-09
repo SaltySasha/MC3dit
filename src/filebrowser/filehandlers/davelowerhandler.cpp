@@ -173,10 +173,14 @@ bool DaveLowerFileHandler::exportFiles(const QString &exportDirectory) {
 
     quint32 fileNumber = 1;
     for (const EntryInfo& entryInfo : entryInfoList_) {
-        file.seek(entryInfo.getMetadata("fileOffset"));
-        QByteArray fileData = file.read(entryInfo.getMetadata("sizeCompressed"));
-        if (entryInfo.getMetadata("sizeFull") != entryInfo.getMetadata("sizeCompressed"))
-            fileData = decompressFile(fileData, entryInfo.getMetadata("sizeFull"));
+        // file.seek(entryInfo.getMetadata("fileOffset"));
+        // QByteArray fileData = file.read(entryInfo.getMetadata("sizeCompressed"));
+        // if (entryInfo.getMetadata("sizeFull") != entryInfo.getMetadata("sizeCompressed"))
+        //     fileData = decompressFile(fileData, entryInfo.getMetadata("sizeFull"));
+        file.seek(entryInfo.fileOffset);
+        QByteArray fileData = file.read(entryInfo.sizeCompressed);
+        if (entryInfo.sizeFull != entryInfo.sizeCompressed)
+            fileData = decompressFile(fileData, entryInfo.sizeFull);
         QString filePath = exportDirectory + "/";
         QFile newFile(filePath + entryInfo.filePath());
 
@@ -397,10 +401,14 @@ bool DaveLowerFileHandler::parseFile() {
 
         EntryInfo newEntryInfo;
         newEntryInfo.fileInfo = QFileInfo(filePath);
-        newEntryInfo.setMetadata("nameOffset", nameOffset);
-        newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
-        newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
-        newEntryInfo.setMetadata("sizeCompressed", toLittleEndian(file.read(4)));
+        // newEntryInfo.setMetadata("nameOffset", nameOffset);
+        // newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
+        // newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
+        // newEntryInfo.setMetadata("sizeCompressed", toLittleEndian(file.read(4)));
+        newEntryInfo.nameOffset = nameOffset;
+        newEntryInfo.fileOffset = toLittleEndian(file.read(4));
+        newEntryInfo.sizeFull = toLittleEndian(file.read(4));
+        newEntryInfo.sizeCompressed = toLittleEndian(file.read(4));
 
         entryInfoList_.append(newEntryInfo);
     }
