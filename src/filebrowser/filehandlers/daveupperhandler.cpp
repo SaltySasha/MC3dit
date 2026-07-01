@@ -17,8 +17,8 @@ using namespace DATUtils;
 bool DaveUpperFileHandler::validateChars(const QString &filePath) const {
     for (const QChar& c : filePath) {
         if (c.unicode() > 127) {
-            QMessageBox::critical(nullptr, "Error",
-                QString("Non-ASCII character '%1' in filename: %2").arg(c, filePath));
+            // QMessageBox::critical(nullptr, "Error",
+            //     QString("Non-ASCII character '%1' in filename: %2").arg(c, filePath));
             return false;
         }
     }
@@ -105,7 +105,7 @@ quint32 DaveUpperFileHandler::handleCompactAlignment(const QList<FileEntry> &ent
 bool DaveUpperFileHandler::exportFiles(const QString &exportDirectory) {
     auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {
-        messageFileNotFound(file.fileName(), file.errorString());
+        // messageFileNotFound(file.fileName(), file.errorString());
         return false;
     }
 
@@ -134,17 +134,17 @@ bool DaveUpperFileHandler::packFiles(const QString &exportDirectoryPath, const Q
     QString exportFilePath = exportDirectoryPath + "/" + fileInfo_.baseName() + ".DAT";
 
     QFile exportFile(exportFilePath);
-    if (exportFile.exists()) {
-    auto reply = QMessageBox::question(nullptr, "Overwrite File",
-                                   "Output file already exists. Overwrite?",
-                                   QMessageBox::Yes | QMessageBox::No);
-    if (reply != QMessageBox::Yes)
-     return false;
-    }
+    // if (exportFile.exists()) {
+    // auto reply = QMessageBox::question(nullptr, "Overwrite File",
+    //                                "Output file already exists. Overwrite?",
+    //                                QMessageBox::Yes | QMessageBox::No);
+    // if (reply != QMessageBox::Yes)
+    //  return false;
+    // }
 
     if (!sourceDirectory.exists()) {
-    QMessageBox::critical(nullptr, "Error", "Source folder does not exist");
-    return false;
+    // QMessageBox::critical(nullptr, "Error", "Source folder does not exist");
+        return false;
     }
 
     constexpr quint32 byteAlignment = 2048;
@@ -154,30 +154,30 @@ bool DaveUpperFileHandler::packFiles(const QString &exportDirectoryPath, const Q
     QDirIterator iterator(sourceDirectory.path(), QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden,
     QDirIterator::Subdirectories);
     while (iterator.hasNext()) {
-    QString filePath = iterator.next();
-    QFileInfo fileInfo(filePath);
+        QString filePath = iterator.next();
+        QFileInfo fileInfo(filePath);
 
-    if (fileInfo.isDir())
-     continue;
+        if (fileInfo.isDir())
+            continue;
 
-    QString relativePath = sourceDirectory.relativeFilePath(filePath);
-    relativePath.replace("\\", "/"); // Normalize to forward slashes
+        QString relativePath = sourceDirectory.relativeFilePath(filePath);
+        relativePath.replace("\\", "/"); // Normalize to forward slashes
 
-    // Validate filename length
-    if (relativePath.length() >= 256) {
-     QMessageBox::critical(nullptr, "Error",
-                             QString("Filename too long: %1").arg(relativePath));
-     return false;
-    }
+        // Validate filename length
+        if (relativePath.length() >= 256) {
+         // QMessageBox::critical(nullptr, "Error",
+         //                         QString("Filename too long: %1").arg(relativePath));
+            return false;
+        }
 
-    // Validate characters in filename
-    if (!validateChars(relativePath))
-     return false;
+        // Validate characters in filename
+        if (!validateChars(relativePath))
+            return false;
 
-    FileEntry newEntry;
-    newEntry.setFile(filePath);
-    newEntry.relativePath = relativePath;
-    fileEntries.append(newEntry);
+        FileEntry newEntry;
+        newEntry.setFile(filePath);
+        newEntry.relativePath = relativePath;
+        fileEntries.append(newEntry);
     }
 
     sortFiles(fileEntries);
@@ -191,7 +191,7 @@ bool DaveUpperFileHandler::packFiles(const QString &exportDirectoryPath, const Q
 
     QByteArray allNameBytes;
     for (const QByteArray& name : fileNames)
-    allNameBytes.append(name);
+        allNameBytes.append(name);
     const quint32 nameBlockSize = calculateAlign(allNameBytes.size(), 0x800);
 
     // Create output directory if needed
@@ -200,40 +200,39 @@ bool DaveUpperFileHandler::packFiles(const QString &exportDirectoryPath, const Q
 
     // Open output file
     if (!exportFile.open(QIODevice::WriteOnly)) {
-    QMessageBox::critical(nullptr, "Error",
-                         QString("Could not create output file: %1").arg(exportFile.errorString()));
-    return false;
+    // QMessageBox::critical(nullptr, "Error",
+    //                      QString("Could not create output file: %1").arg(exportFile.errorString()));
+        return false;
     }
 
     // Start writing file data
     quint32 fileOffset = 0x800 + entreSize + nameBlockSize;
     QList<FileEntry> outEntries;
     for (int i = 0; i < fileEntries.size(); i++) {
-    FileEntry& entry = fileEntries[i];
+        FileEntry& entry = fileEntries[i];
 
-    // Handle directories
-    if (entry.relativePath.endsWith("/")) {
-     entry.fileOffset = fileOffset;
-     outEntries.append(entry);
-     continue;
+        // Handle directories
+        if (entry.relativePath.endsWith("/")) {
+         entry.fileOffset = fileOffset;
+         outEntries.append(entry);
+         continue;
     }
 
     // Check file offset overflow
     if (fileOffset > 0xFFFFFFFF) {
-     QMessageBox::critical(nullptr, "Archive Too Big",
-         "Archive size exceeds maximum (4GB).");
-     exportFile.close();
-     QFile::remove(exportFilePath);
-     return false;
+        // QMessageBox::critical(nullptr, "Archive Too Big", "Archive size exceeds maximum (4GB).");
+        exportFile.close();
+        QFile::remove(exportFilePath);
+        return false;
     }
 
     // Read file data
     QFile entryFile(entry.filePath());
     if (!entryFile.open(QIODevice::ReadOnly)) {
-     QMessageBox::critical(nullptr, "Unable To Open File",
-         QString("Could not open %1 with reason:\n%2").arg(entryFile.fileName(), entryFile.errorString()));
-     QFile::remove(exportFilePath);
-     return false;
+     // QMessageBox::critical(nullptr, "Unable To Open File",
+     //     QString("Could not open %1 with reason:\n%2").arg(entryFile.fileName(), entryFile.errorString()));
+        QFile::remove(exportFilePath);
+        return false;
     }
 
     QByteArray entryFileData = entryFile.readAll();
@@ -253,15 +252,15 @@ bool DaveUpperFileHandler::packFiles(const QString &exportDirectoryPath, const Q
 
     quint32 tempFileOffset = handleCompactAlignment(outEntries, byteAlignment, entryFileData.size());
     if (tempFileOffset > -1)
-     fileOffset = tempFileOffset;
+        fileOffset = tempFileOffset;
 
-    exportFile.seek(fileOffset);
-    entry.fileOffset = fileOffset;
-    exportFile.write(entryFileData);
+        exportFile.seek(fileOffset);
+        entry.fileOffset = fileOffset;
+        exportFile.write(entryFileData);
 
-    fileOffset = calculateAlign(exportFile.pos(), byteAlignment);
+        fileOffset = calculateAlign(exportFile.pos(), byteAlignment);
 
-    outEntries.append(entry);
+        outEntries.append(entry);
     }
 
     // Pad last file
@@ -286,17 +285,17 @@ bool DaveUpperFileHandler::packFiles(const QString &exportDirectoryPath, const Q
     // Write entry table
     exportFile.seek(0x800);
     for (int i = 0; i < outEntries.size(); i++) {
-     const FileEntry& entry = outEntries[i];
-     exportFile.write(getIntAsBytes(nameOffsets[i], 4));
-     exportFile.write(getIntAsBytes(entry.fileOffset, 4));
-     exportFile.write(getIntAsBytes(entry.sizeFull, 4));
-     exportFile.write(getIntAsBytes(entry.sizeCompressed, 4));
+        const FileEntry& entry = outEntries[i];
+        exportFile.write(getIntAsBytes(nameOffsets[i], 4));
+        exportFile.write(getIntAsBytes(entry.fileOffset, 4));
+        exportFile.write(getIntAsBytes(entry.sizeFull, 4));
+        exportFile.write(getIntAsBytes(entry.sizeCompressed, 4));
     }
 
     // Write filename block
     exportFile.seek(0x800 + entreSize);
     for (const QByteArray& name : fileNames) {
-     exportFile.write(name);
+        exportFile.write(name);
     }
 
     exportFile.close();

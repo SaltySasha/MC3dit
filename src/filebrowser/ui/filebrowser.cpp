@@ -1,5 +1,6 @@
 ﻿#include "filebrowser.h"
 
+#include <QFileDialog>
 #include <QPainter>
 #include <QMessageBox>
 #include <QtEvents>
@@ -15,6 +16,9 @@ FileBrowser::FileBrowser(QWidget *parent)
 
     for (QString& spinnerChar : spinnerChars_)
         spinnerIcons_.append(createTextIcon(spinnerChar));
+
+    ui->exportSection->setVisible(false);
+    ui->packSection->setVisible(false);
 
     connect(ui->fileTabWidget, &QTabWidget::tabCloseRequested, this, &FileBrowser::tabCloseRequested);
     connect(ui->fileTabWidget, &QTabWidget::currentChanged, this, [this] {
@@ -43,6 +47,23 @@ FileBrowser::FileBrowser(QWidget *parent)
                 ui->packButton->setEnabled(canPack());
             });
             fileView->packFiles();
+        }
+    });
+    connect(ui->exportBrowseButton, &QPushButton::clicked, this, [this] {
+        QString exportDirectory = QFileDialog::getExistingDirectory(this, "Export Directory", ui->exportLineEdit->text());
+        auto* fileView = dynamic_cast<FileView*>(ui->fileTabWidget->currentWidget());
+        if (!exportDirectory.isEmpty() && fileView) {
+            exportDirectory += "/" + fileView->fileInfo().baseName();
+            ui->exportLineEdit->setText(exportDirectory);
+            fileView->setExportDirectory(exportDirectory);
+        }
+    });
+    connect(ui->packBrowseButton, &QPushButton::clicked, this, [this] {
+        QString packDirectory = QFileDialog::getExistingDirectory(this, "Pack Directory", ui->packLineEdit->text());
+        auto* fileView = dynamic_cast<FileView*>(ui->fileTabWidget->currentWidget());
+        if (!packDirectory.isEmpty() && fileView) {
+            ui->packLineEdit->setText(packDirectory);
+            fileView->setPackDirectory(packDirectory);
         }
     });
 }
@@ -112,6 +133,8 @@ void FileBrowser::dropEvent(QDropEvent *event) {
         connect(newFileView, &FileView::fileLoaded, this, [this, newFileView, url, newTabIndex](bool success) {
             toggleTabLoadingIndicator(newTabIndex, false);
             setLineEditTexts();
+            ui->exportSection->setVisible(success);
+            ui->packSection->setVisible(success);
 
             if (!success) {
                 QMessageBox::warning(this, "Couldn't Load File", QString("Unable to load file:\n%1").arg(url.toLocalFile()));
@@ -124,11 +147,15 @@ void FileBrowser::dropEvent(QDropEvent *event) {
     }
 }
 
-void FileBrowser::tabCloseRequested(quint32 index) {
+void FileBrowser::tabCloseRequested(int index) {
     QWidget* tabWidget = ui->fileTabWidget->widget(index);
     ui->fileTabWidget->removeTab(index);
     if (tabWidget)
         tabWidget->deleteLater();
+
+    bool shouldHideSections = ui->fileTabWidget->count() != 0;
+    ui->exportSection->setVisible(shouldHideSections);
+    ui->packSection->setVisible(shouldHideSections);
 }
 
 bool FileBrowser::tabExists(const QString &filePath, bool setCurrent) const {

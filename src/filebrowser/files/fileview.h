@@ -15,6 +15,10 @@ public:
     void loadFile();
     void exportFiles();
     void packFiles();
+    void setExportDirectory(const QString &exportDirectory) {exportDirectory_ = exportDirectory;}
+    void setPackDirectory(const QString &packDirectory) {packDirectory_ = packDirectory;}
+
+    QFileInfo fileInfo() const;
     [[nodiscard]] bool isValid() const {return fileHandler_ != nullptr;}
     [[nodiscard]] QString exportDirectory() const {return exportDirectory_;}
     [[nodiscard]] QString packDirectory() const {return packDirectory_;}

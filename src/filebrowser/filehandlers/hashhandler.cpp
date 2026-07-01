@@ -42,16 +42,16 @@ bool HashFileHandler::packFiles(const QString &exportDirectoryPath, const QStrin
     QString exportFilePath = exportDirectoryPath + "/" + fileInfo_.baseName() + ".DAT";
 
     QFile exportFile(exportFilePath);
-    if (exportFile.exists()) {
-        auto reply = QMessageBox::question(nullptr, "Overwrite File",
-                                          QString("%1 already exists. Overwrite?").arg(exportFile.fileName()),
-                                          QMessageBox::Yes | QMessageBox::No);
-        if (reply != QMessageBox::Yes)
-            return false;
-    }
+    // if (exportFile.exists()) {
+    //     auto reply = QMessageBox::question(nullptr, "Overwrite File",
+    //                                       QString("%1 already exists. Overwrite?").arg(exportFile.fileName()),
+    //                                       QMessageBox::Yes | QMessageBox::No);
+    //     if (reply != QMessageBox::Yes)
+    //         return false;
+    // }
 
     if (!sourceDirectory.exists()) {
-        QMessageBox::critical(nullptr, "Error", QString("Following folder doesn't exist:%1").arg(sourceDirectoryPath));
+        // QMessageBox::critical(nullptr, "Error", QString("Following folder doesn't exist:%1").arg(sourceDirectoryPath));
         return false;
     }
 
@@ -74,8 +74,8 @@ bool HashFileHandler::packFiles(const QString &exportDirectoryPath, const QStrin
 
         // Validate filename length
         if (relativePath.length() >= 256) {
-            QMessageBox::critical(nullptr, "Error",
-                                    QString("Filename too long: %1").arg(relativePath));
+            // QMessageBox::critical(nullptr, "Error",
+            //                         QString("Filename too long: %1").arg(relativePath));
             return false;
         }
 
@@ -101,8 +101,8 @@ bool HashFileHandler::packFiles(const QString &exportDirectoryPath, const QStrin
 
     // Open output file
     if (!exportFile.open(QIODevice::WriteOnly)) {
-        QMessageBox::critical(nullptr, "Error",
-                                QString("Could not create output file: %1").arg(exportFile.errorString()));
+        // QMessageBox::critical(nullptr, "Error",
+        //                         QString("Could not create output file: %1").arg(exportFile.errorString()));
         return false;
     }
 
@@ -129,8 +129,8 @@ bool HashFileHandler::packFiles(const QString &exportDirectoryPath, const QStrin
         // Read file data
         QFile entryFile(entry.filePath());
         if (!entryFile.open(QIODevice::ReadOnly)) {
-            QMessageBox::critical(nullptr, "Unable To Open File",
-                QString("Could not open %1 with reason:\n%2").arg(entryFile.fileName(), entryFile.errorString()));
+            // QMessageBox::critical(nullptr, "Unable To Open File",
+            //     QString("Could not open %1 with reason:\n%2").arg(entryFile.fileName(), entryFile.errorString()));
             QFile::remove(exportFilePath);
             return false;
         }
@@ -233,8 +233,8 @@ bool HashFileHandler::packFiles(const QString &exportDirectoryPath, const QStrin
 bool HashFileHandler::validateChars(const QString &filePath) const {
     for (const QChar& c : filePath) {
         if (c.unicode() > 127) {
-            QMessageBox::critical(nullptr, "Error",
-                QString("Non-ASCII character '%1' in filename: %2").arg(c, filePath));
+            // QMessageBox::critical(nullptr, "Error",
+            //     QString("Non-ASCII character '%1' in filename: %2").arg(c, filePath));
             return false;
         }
     }
@@ -260,7 +260,7 @@ bool HashFileHandler::prepareFileBlock(const QList<FileEntry> &fileEntries, QLis
 bool HashFileHandler::parseFile() {
     auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {
-        messageFileNotFound(file.fileName(), file.errorString());
+        // messageFileNotFound(file.fileName(), file.errorString());
         return false;
     }
 
@@ -281,7 +281,7 @@ bool HashFileHandler::parseFile() {
     else {
         QFile nameList(":/MC3_PS2_Streams.lst");
         if (!nameList.open(QIODevice::ReadOnly)) {
-            messageFileNotFound(file.fileName(), file.errorString());
+            // messageFileNotFound(file.fileName(), file.errorString());
             return false;
         }
 

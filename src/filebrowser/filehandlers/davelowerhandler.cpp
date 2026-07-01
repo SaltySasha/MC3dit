@@ -17,8 +17,8 @@ using namespace DATUtils;
 bool DaveLowerFileHandler::validateChars(const QString &filePath) const {
     for (const QChar& c : filePath.toLower()) {
         if (!usableChars_.contains(c.toLatin1())) {
-            QMessageBox::critical(nullptr, "Error",
-                QString("Invalid character '%1' in filename: %2").arg(c, filePath));
+            // QMessageBox::critical(nullptr, "Error",
+            //     QString("Invalid character '%1' in filename: %2").arg(c, filePath));
             return false;
         }
     }
@@ -167,16 +167,12 @@ QByteArray DaveLowerFileHandler::compressName(const QString &name, const QString
 bool DaveLowerFileHandler::exportFiles(const QString &exportDirectory) {
     auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {
-        messageFileNotFound(file.fileName(), file.errorString());
+        // messageFileNotFound(file.fileName(), file.errorString());
         return false;
     }
 
     quint32 fileNumber = 1;
     for (const EntryInfo& entryInfo : entryInfoList_) {
-        // file.seek(entryInfo.getMetadata("fileOffset"));
-        // QByteArray fileData = file.read(entryInfo.getMetadata("sizeCompressed"));
-        // if (entryInfo.getMetadata("sizeFull") != entryInfo.getMetadata("sizeCompressed"))
-        //     fileData = decompressFile(fileData, entryInfo.getMetadata("sizeFull"));
         file.seek(entryInfo.fileOffset);
         QByteArray fileData = file.read(entryInfo.sizeCompressed);
         if (entryInfo.sizeFull != entryInfo.sizeCompressed)
@@ -202,16 +198,16 @@ bool DaveLowerFileHandler::packFiles(const QString &exportDirectoryPath, const Q
      QString exportFilePath = exportDirectoryPath + "/" + fileInfo_.baseName() + ".DAT";
 
      QFile exportFile(exportFilePath);
-     if (exportFile.exists()) {
-         auto reply = QMessageBox::question(nullptr, "Overwrite File",
-                                           "Output file already exists. Overwrite?",
-                                           QMessageBox::Yes | QMessageBox::No);
-         if (reply != QMessageBox::Yes)
-             return false;
-     }
+     // if (exportFile.exists()) {
+     //     auto reply = QMessageBox::question(nullptr, "Overwrite File",
+     //                                       "Output file already exists. Overwrite?",
+     //                                       QMessageBox::Yes | QMessageBox::No);
+     //     if (reply != QMessageBox::Yes)
+     //         return false;
+     // }
 
      if (!sourceDirectory.exists()) {
-         QMessageBox::critical(nullptr, "Error", "Source folder does not exist");
+         // QMessageBox::critical(nullptr, "Error", "Source folder does not exist");
          return false;
      }
 
@@ -233,8 +229,8 @@ bool DaveLowerFileHandler::packFiles(const QString &exportDirectoryPath, const Q
 
          // Validate filename length
          if (relativePath.length() >= 256) {
-             QMessageBox::critical(nullptr, "Error",
-                                     QString("Filename too long: %1").arg(relativePath));
+             // QMessageBox::critical(nullptr, "Error",
+             //                         QString("Filename too long: %1").arg(relativePath));
              return false;
          }
 
@@ -268,8 +264,8 @@ bool DaveLowerFileHandler::packFiles(const QString &exportDirectoryPath, const Q
 
      // Open output file
      if (!exportFile.open(QIODevice::WriteOnly)) {
-         QMessageBox::critical(nullptr, "Error",
-                                 QString("Could not create output file: %1").arg(exportFile.errorString()));
+         // QMessageBox::critical(nullptr, "Error",
+         //                         QString("Could not create output file: %1").arg(exportFile.errorString()));
          return false;
      }
 
@@ -288,8 +284,7 @@ bool DaveLowerFileHandler::packFiles(const QString &exportDirectoryPath, const Q
 
          // Check file offset overflow
          if (fileOffset > 0xFFFFFFFF) {
-             QMessageBox::critical(nullptr, "Archive Too Big",
-                 "Archive size exceeds maximum (4GB).");
+             // QMessageBox::critical(nullptr, "Archive Too Big", "Archive size exceeds maximum (4GB).");
              exportFile.close();
              QFile::remove(exportFilePath);
              return false;
@@ -298,8 +293,8 @@ bool DaveLowerFileHandler::packFiles(const QString &exportDirectoryPath, const Q
          // Read file data
          QFile entryFile(entry.filePath());
          if (!entryFile.open(QIODevice::ReadOnly)) {
-             QMessageBox::critical(nullptr, "Unable To Open File",
-                 QString("Could not open %1 with reason:\n%2").arg(entryFile.fileName(), entryFile.errorString()));
+             // QMessageBox::critical(nullptr, "Unable To Open File",
+             //     QString("Could not open %1 with reason:\n%2").arg(entryFile.fileName(), entryFile.errorString()));
              QFile::remove(exportFilePath);
              return false;
          }
@@ -374,7 +369,7 @@ bool DaveLowerFileHandler::packFiles(const QString &exportDirectoryPath, const Q
 bool DaveLowerFileHandler::parseFile() {
     auto file = QFile(fileInfo_.absoluteFilePath());
     if (!file.open(QIODeviceBase::ReadOnly)) {
-        messageFileNotFound(file.fileName(), file.errorString());
+        // messageFileNotFound(file.fileName(), file.errorString());
         return false;
     }
 
@@ -401,10 +396,6 @@ bool DaveLowerFileHandler::parseFile() {
 
         EntryInfo newEntryInfo;
         newEntryInfo.fileInfo = QFileInfo(filePath);
-        // newEntryInfo.setMetadata("nameOffset", nameOffset);
-        // newEntryInfo.setMetadata("fileOffset", toLittleEndian(file.read(4)));
-        // newEntryInfo.setMetadata("sizeFull", toLittleEndian(file.read(4)));
-        // newEntryInfo.setMetadata("sizeCompressed", toLittleEndian(file.read(4)));
         newEntryInfo.nameOffset = nameOffset;
         newEntryInfo.fileOffset = toLittleEndian(file.read(4));
         newEntryInfo.sizeFull = toLittleEndian(file.read(4));

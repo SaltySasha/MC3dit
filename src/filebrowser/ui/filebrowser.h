@@ -20,7 +20,7 @@ public:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dragMoveEvent(QDragMoveEvent *event) override;
     void dropEvent(QDropEvent *event) override;
-    void tabCloseRequested(quint32 index);
+    void tabCloseRequested(int index);
 
     [[nodiscard]] bool tabExists(const QString &filePath, bool setCurrent = false) const;
 

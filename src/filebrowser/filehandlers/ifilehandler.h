@@ -16,7 +16,7 @@ public:
     virtual void populateModel(QStandardItem* rootItem);
 
     void setFileInfo(const QFileInfo &fileInfo) {fileInfo_ = fileInfo;}
-    [[nodiscard]] QFileInfo getFileInfo() const {return fileInfo_;}
+    [[nodiscard]] const QFileInfo& getFileInfo() const {return fileInfo_;}
 
 signals:
     void parseFinished(bool success);

@@ -72,6 +72,13 @@ void FileView::packFiles() {
     packWatcher->setFuture(packFuture);
 }
 
+QFileInfo FileView::fileInfo() const {
+    if (fileHandler_)
+        return fileHandler_->getFileInfo();
+
+    return {};
+}
+
 // FileView * FileView::create(const QString &filePath) {
 //     auto* datFile = new FileView(filePath);
 //     if (!datFile->fileHandler_) {
